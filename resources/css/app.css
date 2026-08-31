@@ -1,0 +1,161 @@
+@import 'tailwindcss';
+
+@font-face {
+    font-family: 'Playfair Display';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/fonts/playfair-display-700.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Playfair Display';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url('/fonts/playfair-display-800.woff2') format('woff2');
+}
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../../resources/views/**/*.blade.php';
+@source '../../resources/js/**/*.js';
+
+@theme {
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-serif: 'Playfair Display', Georgia, Cambria, 'Times New Roman', Times, serif;
+
+    /* Qahira Elementor Kit Precise Color Palette */
+    --color-primary: #1B3B2B;       /* Dark Forest Green (Qahira Main) */
+    --color-primary-hover: #132E22; /* Darker Green Hover */
+    --color-primary-light: #EAF1E8; /* Soft mint / sage pill background */
+    --color-sage: #EFF3EB;          /* Sage / Cream Ivory for Package Cards & Sections */
+    --color-sage-dark: #E0E7DC;     /* Sage Border Tone */
+    --color-gold: #C2A264;          /* Subdued warm gold */
+    --color-pure-white: #FFFFFF;    /* Pure White */
+    --color-dark: #122B1F;          /* Deepest Forest Green for Topbar & Footer */
+    --color-text-main: #12271E;     /* Deep forest dark for serif headings */
+    --color-text-body: #526057;     /* Soft slate / forest gray for body */
+    --color-text-muted: #4D5E54;    /* Muted label gray */
+    --color-border: #E0E7DC;        /* Structural 1px border */
+}
+
+/* ==================================================================
+   ANIMATIONS & SCROLL REVEAL (PRESERVED EXACTLY AS IS)
+   ================================================================== */
+
+[data-reveal] {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+
+.revealed[data-reveal] {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+[data-reveal-child] {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+
+.revealed[data-reveal-child] {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-reveal],
+    [data-reveal-child] {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}
+
+/* ==================================================================
+   NAVBAR CLEAN TEXT ENFORCEMENT (NO BACKGROUND / NO PILL / NO SHADOW)
+   ================================================================== */
+header#navbar nav a,
+header#navbar nav button,
+header#navbar [data-nav-item],
+#navbar [data-nav-item],
+#navbar [data-nav-item]:hover,
+#navbar [data-nav-item]:focus,
+#navbar [data-nav-item]:active,
+#navbar [data-nav-item][aria-expanded="true"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+    outline: none !important;
+}
+
+header#navbar nav a:hover,
+header#navbar nav button:hover {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+#navbar [data-nav-item]::before,
+#navbar [data-nav-item]::after {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+}
+
+#navbar [data-nav-item]:focus-visible {
+    outline: none;
+    text-decoration-line: underline;
+    text-underline-offset: 0.25rem;
+}
+
+/* ==================================================================
+   QAHIRA CARD STYLES
+   ================================================================== */
+
+.qahira-card {
+    background-color: #EFF3EB;
+    border: 1px solid #E0E7DC;
+    border-radius: 1.25rem; /* 20px */
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.qahira-card:hover {
+    transform: translateY(-3px);
+    border-color: #CCD8C7;
+    box-shadow: 0 12px 28px -6px rgba(27, 59, 43, 0.1);
+}
+
+.clean-card {
+    background-color: #FFFFFF;
+    border: 1px solid #E0E7DC;
+    border-radius: 1.25rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.clean-card:hover {
+    border-color: #CCD8C7;
+    box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.06);
+}
+
+/* ==================================================================
+   LIGHTBOX OVERLAY
+   ================================================================== */
+
+.lightbox-overlay {
+    animation: fadeIn 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}

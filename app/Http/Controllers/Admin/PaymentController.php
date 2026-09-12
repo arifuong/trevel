@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Registration;
-use App\Services\WhatsappOtpInterface;
+use App\Contracts\WhatsAppNotificationInterface;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class PaymentController extends Controller
 {
     public function __construct(
-        private WhatsappOtpInterface $whatsapp
+        private WhatsAppNotificationInterface $whatsapp
     ) {}
 
     /**
@@ -123,11 +123,15 @@ class PaymentController extends Controller
 
                 $isFullyPaid = $invoice->remaining_balance <= 0;
 
-                // 4. Update status registrasi sesuai alur PRD Section 11
+                // 4. Update status registrasi sesuai alur 8 Tahap Persiapan Ibadah
                 if ($isFullyPaid) {
                     $registration->update([
                         'status' => Registration::STATUS_LUNAS,
                     ]);
+
+                    // Otomatis transisi ke MENUNGGU_KELENGKAPAN_KEBERANGKATAN atau BERANGKAT
+                    $bookingStatusService = app(\App\Services\BookingStatusService::class);
+                    $bookingStatusService->evaluateStatus($registration);
                 } elseif ($payment->type === Payment::TYPE_DP) {
                     $registration->update([
                         'status' => Registration::STATUS_JAMAAH,

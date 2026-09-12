@@ -1,13 +1,13 @@
 <x-layouts.main :title="'PT. Zein Internasional — Pengalaman Ibadah Umrah yang Khusyuk & Terpercaya'" :company="$company">
     
     <!-- ════════════════════════════════════════
-         1. HERO SECTION & 3 KOLOM FITUR SINGKAT (MENYATU TANPA JARAK)
+         1. HERO SECTION 
          ════════════════════════════════════════ -->
     <x-hero :company="$company" />
 
 
     <!-- ════════════════════════════════════════
-         2. TENTANG KAMI / PROFIL (Rasio 45:55 Dua Kolom)
+         2. TENTANG KAMI 
          ════════════════════════════════════════ -->
     <section id="profil" class="py-20 sm:py-28 bg-white border-b border-[#E0E7DC]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -20,7 +20,6 @@
                     <!-- Label Atas -->
                     <div>
                         <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-[#1B3B2B]">
-                            PROFIL PERUSAHAAN
                         </span>
                     </div>
 
@@ -66,30 +65,100 @@
 
                 </div>
 
-                <!-- Kolom Kanan (Foto dengan Sudut Bulat Besar + Tombol Putar Video) -->
+                <!-- Kolom Kanan (Video YouTube Embed Responsif 16:9 / Fallback) -->
                 <div data-reveal class="lg:col-span-6">
-                    <div class="relative rounded-3xl overflow-hidden shadow-lg border border-[#E0E7DC] aspect-[4/3] sm:aspect-[16/11] bg-[#EFF3EB]">
-                        <img src="https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?auto=format&fm=webp&fit=crop&w=600&q=75" 
-                             alt="Pelataran Masjid Nabawi Madinah" 
-                             width="600"
-                             height="450"
-                             loading="lazy"
-                             decoding="async"
-                             class="w-full h-full object-cover">
-                        
-                        <!-- Lapisan Gelap -->
-                        <div class="absolute inset-0 bg-black/15"></div>
+                    @php
+                        $youtubeEmbedUrl = $company['youtube_embed_url'] ?? null;
+                        $videoTitle = $company['video_title'] ?? 'Profil PT. Zein Internasional';
+                    @endphp
 
-                        <!-- Tombol Putar Video Bulat -->
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <button type="button"
-                                    onclick="openLightbox('https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?auto=format&fm=webp&fit=crop&w=1200&q=85', 'Dokumentasi Manasik & Perjalanan Jamaah PT. Zein Internasional')"
-                                    class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#1B3B2B]/90 text-white flex items-center justify-center shadow-2xl hover:scale-105 transition-transform duration-200 cursor-pointer border-2 border-white/40 backdrop-blur-xs"
-                                    aria-label="Putar video dokumentasi">
-                                <svg class="w-6 h-6 sm:w-8 sm:h-8 fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            </button>
+                    @if(!empty($youtubeEmbedUrl))
+                        <div class="relative rounded-3xl overflow-hidden shadow-xl border border-[#E0E7DC] aspect-video bg-[#12271E]"
+                             x-data="{ isPlaying: false }">
+                            <template x-if="!isPlaying">
+                                <div class="relative w-full h-full group cursor-pointer"
+                                     @click="isPlaying = true">
+                                    @php
+                                        $youtubeVideoId = $company['youtube_video_id'] ?? null;
+                                        $thumbnail = $youtubeVideoId 
+                                            ? "https://img.youtube.com/vi/{$youtubeVideoId}/hqdefault.jpg" 
+                                            : ($company['hero_image_url'] ?? 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fm=webp&fit=crop&w=1280&q=75');
+                                    @endphp
+                                    <img src="{{ $thumbnail }}" 
+                                         alt="{{ $videoTitle }}" 
+                                         width="640" 
+                                         height="360" 
+                                         loading="lazy" 
+                                         decoding="async" 
+                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out">
+                                    
+                                    <!-- Subtle dark overlay -->
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/20 group-hover:from-black/50 transition-colors"></div>
+
+                                    <!-- Video Title Badge at Top -->
+                                    <div class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-white bg-black/60 backdrop-blur-sm border border-white/20">
+                                            <svg class="w-3.5 h-3.5 text-black-500 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                            <span>Video Profil</span>
+                                        </span>
+                                    </div>
+
+                                    <!-- YouTube Play Button in Center -->
+                                    <div class="absolute inset-0 flex items-center justify-center z-10">
+                                        <button type="button" 
+                                                class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black-600/90 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-red-600 active:scale-95 transition-all duration-300 border-2 border-white/60 backdrop-blur-xs focus:outline-none cursor-pointer"
+                                                aria-label="Putar video {{ $videoTitle }}">
+                                            <svg class="w-7 h-7 sm:w-8 sm:h-8 fill-current ml-1" viewBox="0 0 24 24">
+                                                <path d="M8 5v14l11-7z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <!-- Bottom duration/hint label -->
+                                    <div class="absolute bottom-4 inset-x-4 flex items-center justify-center pointer-events-none z-10">
+                                        <span class="text-xs font-semibold text-white/90 bg-black/50 px-3 py-1 rounded-full backdrop-blur-xs">
+                                            Klik untuk Memutar Video
+                                        </span>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <template x-if="isPlaying">
+                                <iframe
+                                    src="{{ $youtubeEmbedUrl }}{{ str_contains($youtubeEmbedUrl, '?') ? '&' : '?' }}autoplay=1&rel=0"
+                                    title="{{ $videoTitle }}"
+                                    frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowfullscreen
+                                    class="w-full h-full rounded-3xl"
+                                ></iframe>
+                            </template>
                         </div>
-                    </div>
+                    @else
+                        <!-- Fallback: Placeholder Gambar jika link YouTube belum diisi -->
+                        <div class="relative rounded-3xl overflow-hidden shadow-lg border border-[#E0E7DC] aspect-video bg-[#EFF3EB]">
+                            <img src="https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?auto=format&fm=webp&fit=crop&w=600&q=75" 
+                                 alt="Pelataran Masjid Nabawi Madinah" 
+                                 width="600"
+                                 height="450"
+                                 loading="lazy"
+                                 decoding="async"
+                                 class="w-full h-full object-cover">
+                            
+                            <!-- Lapisan Gelap -->
+                            <div class="absolute inset-0 bg-black/15"></div>
+
+                            <!-- Tombol Putar Video Bulat -->
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <button type="button"
+                                        onclick="openLightbox('https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?auto=format&fm=webp&fit=crop&w=1200&q=85', 'Dokumentasi Manasik & Perjalanan Jamaah PT. Zein Internasional')"
+                                        class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#1B3B2B]/90 text-white flex items-center justify-center shadow-2xl hover:scale-105 transition-transform duration-200 cursor-pointer border-2 border-white/40 backdrop-blur-xs"
+                                        aria-label="Putar video dokumentasi">
+                                    <svg class="w-6 h-6 sm:w-8 sm:h-8 fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
             </div>
@@ -109,7 +178,7 @@
                 <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-[#1B3B2B] block mb-2">
                     PAKET PILIHAN
                 </span>
-                <h2 class="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold text-[#12271E] tracking-tight">
+                <h2 class="font-sans text-2xl sm:text-4xl lg:text-5xl font-extrabold text-[#12271E] tracking-tight">
                     Jelajahi Paket Pilihan Kami
                 </h2>
                 <p class="text-xs sm:text-sm text-[#526057] mt-3 leading-relaxed">
@@ -139,24 +208,32 @@
     <!-- ════════════════════════════════════════
          4. SECTION 2 — LEGALITAS & SERTIFIKASI
          ════════════════════════════════════════ -->
-    <section id="legalitas" class="py-20 sm:py-28 bg-[#EFF3EB] border-b border-[#E0E7DC]">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="legalitas" class="relative py-20 sm:py-28 fixed-bg-section overflow-hidden" style="background-image: url('{{ asset('images/hero-1920.webp') }}');">
+        <!-- Universal Parallax Background Layer (Always visible, hardware-accelerated, no-repeat) -->
+        <div class="parallax-bg-layer" aria-hidden="true">
+            <div class="parallax-bg-img" style="background-image: url('{{ asset('images/hero-1920.webp') }}');"></div>
+        </div>
+
+        <!-- Overlay Tipis Transparan Alami -->
+        <div class="absolute -top-[2px] -bottom-[2px] inset-x-0 bg-gradient-to-b from-[#06140D]/45 via-[#06140D]/35 to-[#06140D]/45 pointer-events-none z-1" aria-hidden="true"></div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <div data-reveal class="text-center max-w-2xl mx-auto mb-14">
-                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-[#1B3B2B] block mb-2">
+                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-[#E8C882] block mb-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                     LEGALITAS & SERTIFIKASI
                 </span>
-                <h2 class="font-serif text-2xl sm:text-4xl font-bold text-[#12271E] tracking-tight">
+                <h2 class="font-serif text-2xl sm:text-4xl font-bold text-white tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     Terdaftar Resmi di Kementerian Agama RI
                 </h2>
-                <p class="text-xs sm:text-sm text-[#526057] mt-3 leading-relaxed">
+                <p class="text-xs sm:text-sm text-white font-medium mt-3 leading-relaxed max-w-xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                     Keamanan dan kepastian keberangkatan Anda terjamin dengan izin operasional resmi dan akreditasi A.
                 </p>
             </div>
             
             <div data-reveal-stagger="100" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach($legalities as $legality)
-                    <div data-reveal-child class="bg-white rounded-2xl p-6 sm:p-7 border border-[#E0E7DC] flex flex-col justify-between shadow-xs">
+                    <div data-reveal-child class="bg-white/95 backdrop-blur-xs rounded-2xl p-6 sm:p-7 border border-white/40 flex flex-col justify-between shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
                         <div>
                             <span class="text-[10px] uppercase font-bold text-[#1B3B2B] bg-[#EAF1E8] px-2.5 py-1 rounded-md inline-block mb-3.5">
                                 {{ $legality['badge'] }}
@@ -174,8 +251,9 @@
             </div>
 
             <div class="mt-10 text-center">
-                <a href="{{ route('legalitas') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1B3B2B] hover:underline">
-                    Lihat Dokumen SK & Prinsip 5 Pasti Umrah &rarr;
+                <a href="{{ route('legalitas') }}" class="inline-flex items-center gap-2 text-xs font-semibold text-white bg-black/30 hover:bg-black/45 border border-white/40 backdrop-blur-xs px-5 py-2.5 rounded-full transition-all duration-200 shadow-lg hover:scale-102">
+                    <span>Lihat Dokumen SK & Prinsip 5 Pasti Umrah</span>
+                    <span>&rarr;</span>
                 </a>
             </div>
 
@@ -231,7 +309,7 @@
     <!-- ════════════════════════════════════════
          SECTION — PARTNERSHIP (MITRA KERJA SAMA)
          ════════════════════════════════════════ -->
-    <section id="partnership" class="py-20 sm:py-28 bg-[#EFF3EB] border-b border-[#E0E7DC] scroll-mt-28 lg:scroll-mt-36">
+    <section id="partnership" class="py-20 sm:py-28 bg-white border-b border-[#E0E7DC] scroll-mt-28 lg:scroll-mt-36">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <div data-reveal class="text-center max-w-2xl mx-auto mb-14">
@@ -371,16 +449,6 @@
                     <p class="text-xs sm:text-sm text-[#526057] leading-relaxed">
                         Proses registrasi yang transparan dan terstruktur, didampingi konsultan resmi dari awal hingga kepulangan.
                     </p>
-
-                    <div class="pt-2 bg-[#EFF3EB] rounded-2xl p-5 border border-[#E0E7DC]">
-                        <p class="text-xs text-[#12271E] font-medium mb-3">Butuh panduan pengurusan paspor & dokumen?</p>
-                        <a href="https://wa.me/{{ $company['whatsapp'] ?? '6281222222562' }}?text=Assalamu%27alaikum,%20mohon%20panduan%20dokumen%20pendaftaran%20Umrah" 
-                           target="_blank" 
-                           rel="noopener noreferrer" 
-                           class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-semibold text-white bg-[#1B3B2B] hover:bg-[#132E22] transition-colors shadow-xs">
-                            Konsultasi Dokumen
-                        </a>
-                    </div>
                 </div>
 
                 <!-- Kanan: Daftar Tahapan -->
@@ -389,31 +457,86 @@
                 </div>
             </div>
 
+            <!-- Box Konsultasi Dokumen: [ICON] [JUDUL + DESKRIPSI] [TOMBOL] -->
+            <div data-reveal class="mt-12 sm:mt-16">
+                <div class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-[#F6FAF7] border border-[#DCE7DF] p-5 sm:p-7 md:p-8 hover:border-[#1B3B2B]/30 hover:shadow-md transition-all duration-300 group">
+                    <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-5 sm:gap-6 lg:gap-8">
+                        
+                        <!-- Kiri: Icon Dokumen / Konsultasi -->
+                        <div class="shrink-0 flex items-center">
+                            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white border border-[#DCE7DF] text-[#1B3B2B] flex items-center justify-center shadow-xs group-hover:scale-105 group-hover:bg-[#1B3B2B] group-hover:text-white transition-all duration-300">
+                                <svg class="w-6 h-6 sm:w-7 sm:h-7 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 9h5.25m-5.25 3h3m-6.75-15h6.75l4.5 4.5v12.75a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V5.25A2.25 2.25 0 016 3z" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Tengah/Kiri: Teks (Judul di atas, Deskripsi tepat di bawahnya) -->
+                        <div class="flex-1 space-y-1 text-left">
+                            <h3 class="font-serif text-base sm:text-lg lg:text-xl font-bold text-[#12271E] tracking-tight">
+                                Butuh panduan pengurusan paspor & dokumen?
+                            </h3>
+                            <p class="text-xs sm:text-sm text-[#526057] leading-relaxed max-w-2xl">
+                                Konsultan resmi Zeintour siap mendampingi verifikasi berkas, pembuatan paspor baru, hingga suntik meningitis agar ibadah Anda tenang dan lancar.
+                            </p>
+                        </div>
+
+                        <!-- Kanan: Tombol Konsultasi Dokumen -->
+                        <div class="shrink-0 w-full sm:w-auto">
+                            <a href="https://wa.me/{{ $company['whatsapp'] ?? '6281222222562' }}?text=Assalamu%27alaikum,%20mohon%20panduan%20dokumen%20pendaftaran%20Umrah" 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full text-xs sm:text-sm font-semibold text-white bg-[#1B3B2B] hover:bg-[#132E22] active:scale-[0.98] transition-all duration-200 shadow-xs hover:shadow-md group/btn">
+                                <span>Konsultasi Dokumen</span>
+                                <svg class="w-4 h-4 text-[#C2A264] transition-transform duration-200 group-hover/btn:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                </svg>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
         </div>
     </section>
 
 
-    <!-- ════════════════════════════════════════
-         6. SKEMA PERJALANAN (Udara & Darat)
-         ════════════════════════════════════════ -->
-    <section id="skema-perjalanan" class="py-20 sm:py-28 bg-[#EFF3EB] border-b border-[#E0E7DC] scroll-mt-28 lg:scroll-mt-36">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- ═══════════════════════════════════════════════════════════════
+         CONTINUOUS FIXED BACKGROUND GROUP:
+         6. SKEMA PERJALANAN + 7. LAYANAN SAUDI + 8. PERSYARATAN & HAK
+         Single continuous background & overlay — 100% seamless, zero lines
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="relative fixed-bg-section overflow-hidden" style="background-image: url('{{ asset('images/hero-1920.webp') }}');">
+        <!-- Universal Parallax Background Layer (Always visible, hardware-accelerated, no-repeat) -->
+        <div class="parallax-bg-layer" aria-hidden="true">
+            <div class="parallax-bg-img" style="background-image: url('{{ asset('images/hero-1920.webp') }}');"></div>
+        </div>
+
+        <!-- Single Unified Dark Overlay across all 3 sections -->
+        <div class="absolute inset-0 bg-[#06140D]/40 pointer-events-none z-1" aria-hidden="true"></div>
+
+        <!-- ════════════════════════════════════════
+             6. SKEMA PERJALANAN (Udara & Darat)
+             ════════════════════════════════════════ -->
+        <section id="skema-perjalanan" class="relative z-10 py-20 sm:py-28 scroll-mt-28 lg:scroll-mt-36">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <div data-reveal class="text-center max-w-2xl mx-auto mb-14">
-                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-[#1B3B2B] block mb-2">
+                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-[#E8C882] block mb-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                     SKEMA TRANSPORTASI
                 </span>
-                <h2 class="font-serif text-2xl sm:text-4xl font-bold text-[#12271E] tracking-tight">
+                <h2 class="font-serif text-2xl sm:text-4xl font-bold text-white tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     Transportasi Umrah (Udara & Darat)
                 </h2>
-                <p class="text-xs sm:text-sm text-[#526057] mt-3 leading-relaxed">
+                <p class="text-xs sm:text-sm text-white font-medium mt-3 leading-relaxed max-w-xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                     Standar layanan transportasi lengkap mulai dari bandara keberangkatan dan kedatangan hingga armada di Tanah Suci.
                 </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
                 <!-- TRANSPORTASI UDARA -->
-                <div data-reveal class="bg-white rounded-3xl p-7 sm:p-9 border border-[#E0E7DC] shadow-xs flex flex-col justify-between">
+                <div data-reveal class="bg-white/95 backdrop-blur-xs rounded-3xl p-7 sm:p-9 border border-white/40 shadow-xl flex flex-col justify-between">
                     <div>
                         <div class="flex items-center gap-3 mb-5">
                             <div class="w-11 h-11 rounded-2xl bg-[#EAF1E8] text-[#1B3B2B] flex items-center justify-center shrink-0">
@@ -454,7 +577,7 @@
                 </div>
 
                 <!-- TRANSPORTASI DARAT -->
-                <div data-reveal class="bg-white rounded-3xl p-7 sm:p-9 border border-[#E0E7DC] shadow-xs flex flex-col justify-between">
+                <div data-reveal class="bg-white/95 backdrop-blur-xs rounded-3xl p-7 sm:p-9 border border-white/40 shadow-xl flex flex-col justify-between">
                     <div>
                         <div class="flex items-center gap-3 mb-5">
                             <div class="w-11 h-11 rounded-2xl bg-[#EAF1E8] text-[#1B3B2B] flex items-center justify-center shrink-0">
@@ -498,17 +621,17 @@
     <!-- ════════════════════════════════════════
          7. SECTION 3 — PELAYANAN DI ARAB SAUDI
          ════════════════════════════════════════ -->
-    <section id="layanan-saudi" class="py-20 sm:py-28 bg-[#EFF3EB] border-b border-[#E0E7DC] scroll-mt-28 lg:scroll-mt-36">
+    <section id="layanan-saudi" class="relative z-10 py-20 sm:py-28 scroll-mt-28 lg:scroll-mt-36">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <div data-reveal class="text-center max-w-2xl mx-auto mb-14">
-                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-[#1B3B2B] block mb-2">
+                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-[#E8C882] block mb-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                     PELAYANAN DI ARAB SAUDI
                 </span>
-                <h2 class="font-serif text-2xl sm:text-4xl font-bold text-[#12271E] tracking-tight">
+                <h2 class="font-serif text-2xl sm:text-4xl font-bold text-white tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     Pelayanan di Arab Saudi
                 </h2>
-                <p class="text-xs sm:text-sm text-[#526057] mt-3 leading-relaxed">
+                <p class="text-xs sm:text-sm text-white font-medium mt-3 leading-relaxed max-w-xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                     Standar pelayanan hotel, bimbingan ibadah & ziarah, serta destinasi tempat ziarah bersejarah yang dikunjungi di Madinah, Makkah, dan Jeddah.
                 </p>
             </div>
@@ -517,7 +640,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch mb-10">
                 
                 <!-- PELAYANAN DI HOTEL -->
-                <div data-reveal class="bg-white rounded-3xl p-7 sm:p-9 border border-[#E0E7DC] shadow-xs flex flex-col justify-between">
+                <div data-reveal class="bg-white/95 backdrop-blur-xs rounded-3xl p-7 sm:p-9 border border-white/40 shadow-xl flex flex-col justify-between">
                     <div>
                         <div class="flex items-center gap-3 mb-5">
                             <div class="w-11 h-11 rounded-2xl bg-[#EAF1E8] text-[#1B3B2B] flex items-center justify-center shrink-0">
@@ -548,7 +671,7 @@
                 </div>
 
                 <!-- IBADAH DAN ZIARAH -->
-                <div data-reveal class="bg-white rounded-3xl p-7 sm:p-9 border border-[#E0E7DC] shadow-xs flex flex-col justify-between">
+                <div data-reveal class="bg-white/95 backdrop-blur-xs rounded-3xl p-7 sm:p-9 border border-white/40 shadow-xl flex flex-col justify-between">
                     <div>
                         <div class="flex items-center gap-3 mb-5">
                             <div class="w-11 h-11 rounded-2xl bg-[#EAF1E8] text-[#1B3B2B] flex items-center justify-center shrink-0">
@@ -581,78 +704,87 @@
             </div>
 
             <!-- Baris 2: TEMPAT-TEMPAT ZIARAH YANG DIKUNJUNGI -->
-            <div data-reveal class="bg-white rounded-3xl p-7 sm:p-10 border border-[#E0E7DC] shadow-xs">
-                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-[#E0E7DC]">
-                    <div class="w-11 h-11 rounded-2xl bg-[#EAF1E8] text-[#1B3B2B] flex items-center justify-center shrink-0">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+            <div data-reveal class="bg-white/95 backdrop-blur-xs rounded-[22px] sm:rounded-3xl p-6 sm:p-9 lg:p-10 border border-white/40 shadow-xl">
+                
+                {{-- HEADER SECTION --}}
+                <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 mb-7 sm:mb-9 pb-5 sm:pb-6 border-b border-[#E8ECE5]">
+                    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#F4F8F5] border border-[#DCE7DF] text-[#1B3B2B] flex items-center justify-center shrink-0 shadow-2xs">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-[#1B3B2B]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                        </svg>
                     </div>
                     <div>
-                        <h3 class="font-serif text-xl sm:text-2xl font-bold text-[#12271E]">
+                        <h3 class="font-serif text-lg sm:text-2xl font-bold text-[#12271E] tracking-tight">
                             TEMPAT-TEMPAT ZIARAH YANG DIKUNJUNGI
                         </h3>
-                        <p class="text-xs text-[#526057]">
+                        <p class="text-xs sm:text-sm text-[#526057] mt-0.5 leading-relaxed">
                             Destinasi napak tilas sejarah Islam selama berada di Tanah Suci
                         </p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {{-- CARD MADINAH, MAKKAH, JEDDAH --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-7 items-stretch">
                     
-                    <!-- 1. Madinah -->
-                    <div class="bg-[#EFF3EB] rounded-2xl p-5 sm:p-6 border border-[#E0E7DC]">
-                        <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#CCD8C7]">
-                            <h4 class="font-serif font-bold text-base text-[#12271E]">
+                    {{-- 1. Madinah --}}
+                    <div class="group bg-white rounded-2xl p-6 sm:p-7 border border-[#E5E9E2] shadow-[0_2px_12px_-2px_rgba(27,59,43,0.04)] hover:border-emerald-600/40 hover:shadow-[0_10px_24px_-4px_rgba(27,59,43,0.08)] hover:-translate-y-1 transition-all duration-250 flex flex-col h-full">
+                        <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-[#E8ECE5]">
+                            <h4 class="font-serif font-bold text-xl sm:text-2xl text-[#12271E] group-hover:text-[#1B3B2B] transition-colors tracking-tight">
                                 Madinah
                             </h4>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-[#1B3B2B] bg-white px-2.5 py-1 rounded-full border border-[#CCD8C7]">
+                            <span class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#1B3B2B] bg-[#F4F8F5] border border-[#DCE7DF] px-2.5 py-1 rounded-full shadow-2xs">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                                 6 Tempat
                             </span>
                         </div>
-                        <ul class="space-y-2.5 text-xs sm:text-sm text-[#374151]">
+                        <ul class="space-y-3 text-xs sm:text-sm text-[#374151] flex-1">
                             @foreach($saudiServices['tempat_ziarah']['locations']['Madinah'] as $loc)
-                                <li class="flex items-center gap-2.5">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-[#1B3B2B] shrink-0"></span>
-                                    <span class="font-medium text-[#12271E]">{{ $loc }}</span>
+                                <li class="flex items-center gap-2.5 group/item">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#1B3B2B] shrink-0 group-hover/item:scale-125 group-hover/item:bg-emerald-600 transition-all"></span>
+                                    <span class="font-medium text-[#12271E] leading-relaxed">{{ $loc }}</span>
                                 </li>
                             @endforeach
                         </ul>
                     </div>
 
-                    <!-- 2. Makkah -->
-                    <div class="bg-[#EFF3EB] rounded-2xl p-5 sm:p-6 border border-[#E0E7DC]">
-                        <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#CCD8C7]">
-                            <h4 class="font-serif font-bold text-base text-[#12271E]">
+                    {{-- 2. Makkah --}}
+                    <div class="group bg-white rounded-2xl p-6 sm:p-7 border border-[#E5E9E2] shadow-[0_2px_12px_-2px_rgba(27,59,43,0.04)] hover:border-emerald-600/40 hover:shadow-[0_10px_24px_-4px_rgba(27,59,43,0.08)] hover:-translate-y-1 transition-all duration-250 flex flex-col h-full">
+                        <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-[#E8ECE5]">
+                            <h4 class="font-serif font-bold text-xl sm:text-2xl text-[#12271E] group-hover:text-[#1B3B2B] transition-colors tracking-tight">
                                 Makkah
                             </h4>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-[#1B3B2B] bg-white px-2.5 py-1 rounded-full border border-[#CCD8C7]">
+                            <span class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#1B3B2B] bg-[#F4F8F5] border border-[#DCE7DF] px-2.5 py-1 rounded-full shadow-2xs">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                                 11 Tempat
                             </span>
                         </div>
-                        <ul class="space-y-2.5 text-xs sm:text-sm text-[#374151]">
+                        <ul class="space-y-3 text-xs sm:text-sm text-[#374151] flex-1">
                             @foreach($saudiServices['tempat_ziarah']['locations']['Makkah'] as $loc)
-                                <li class="flex items-center gap-2.5">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-[#1B3B2B] shrink-0"></span>
-                                    <span class="font-medium text-[#12271E]">{{ $loc }}</span>
+                                <li class="flex items-center gap-2.5 group/item">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#1B3B2B] shrink-0 group-hover/item:scale-125 group-hover/item:bg-emerald-600 transition-all"></span>
+                                    <span class="font-medium text-[#12271E] leading-relaxed">{{ $loc }}</span>
                                 </li>
                             @endforeach
                         </ul>
                     </div>
 
-                    <!-- 3. Jeddah -->
-                    <div class="bg-[#EFF3EB] rounded-2xl p-5 sm:p-6 border border-[#E0E7DC]">
-                        <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#CCD8C7]">
-                            <h4 class="font-serif font-bold text-base text-[#12271E]">
+                    {{-- 3. Jeddah --}}
+                    <div class="group bg-white rounded-2xl p-6 sm:p-7 border border-[#E5E9E2] shadow-[0_2px_12px_-2px_rgba(27,59,43,0.04)] hover:border-emerald-600/40 hover:shadow-[0_10px_24px_-4px_rgba(27,59,43,0.08)] hover:-translate-y-1 transition-all duration-250 flex flex-col h-full">
+                        <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-[#E8ECE5]">
+                            <h4 class="font-serif font-bold text-xl sm:text-2xl text-[#12271E] group-hover:text-[#1B3B2B] transition-colors tracking-tight">
                                 Jeddah
                             </h4>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-[#1B3B2B] bg-white px-2.5 py-1 rounded-full border border-[#CCD8C7]">
+                            <span class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#1B3B2B] bg-[#F4F8F5] border border-[#DCE7DF] px-2.5 py-1 rounded-full shadow-2xs">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                                 4 Tempat
                             </span>
                         </div>
-                        <ul class="space-y-2.5 text-xs sm:text-sm text-[#374151]">
+                        <ul class="space-y-3 text-xs sm:text-sm text-[#374151] flex-1">
                             @foreach($saudiServices['tempat_ziarah']['locations']['Jeddah'] as $loc)
-                                <li class="flex items-center gap-2.5">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-[#1B3B2B] shrink-0"></span>
-                                    <span class="font-medium text-[#12271E]">{{ $loc }}</span>
+                                <li class="flex items-center gap-2.5 group/item">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#1B3B2B] shrink-0 group-hover/item:scale-125 group-hover/item:bg-emerald-600 transition-all"></span>
+                                    <span class="font-medium text-[#12271E] leading-relaxed">{{ $loc }}</span>
                                 </li>
                             @endforeach
                         </ul>
@@ -668,24 +800,25 @@
     <!-- ════════════════════════════════════════
          8. SECTION 4 — PERSYARATAN & HAK JAMAAH
          ════════════════════════════════════════ -->
-    <section id="hak-jamaah" class="py-20 sm:py-28 bg-[#EFF3EB] border-b border-[#E0E7DC]">
+    <section id="hak-jamaah" class="relative z-10 py-20 sm:py-28">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
                 
                 <!-- Kiri: Info Sticky -->
                 <div data-reveal class="lg:col-span-4 lg:sticky lg:top-36 space-y-4">
-                    <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-[#1B3B2B] block">
+                    <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-[#E8C882] block drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                         HAK & PERSYARATAN
                     </span>
-                    <h2 class="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-[#12271E] tracking-tight leading-tight">
+                    <h2 class="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                         Persyaratan & Hak Jamaah
                     </h2>
-                    <p class="text-xs sm:text-sm text-[#526057] leading-relaxed">
+                    <p class="text-xs sm:text-sm text-white font-medium leading-relaxed drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                         Transparansi penuh: mulai syarat administrasi, kebijakan pembatalan, hak sebelum berangkat, selama di Saudi, hingga kepulangan.
                     </p>
-                    <div class="text-xs text-[#4D5E54] pt-1">
-                        <span class="font-bold text-[#12271E]">{{ count($pilgrimRights) }} topik</span> wajib diketahui sebelum pendaftaran.
+                    <div class="inline-flex items-center gap-2 text-xs text-white bg-black/30 px-3.5 py-1.5 rounded-lg border border-white/30 backdrop-blur-xs shadow-md">
+                        <span class="font-bold text-[#E8C882]">{{ count($pilgrimRights) }} topik</span>
+                        <span>wajib diketahui sebelum pendaftaran.</span>
                     </div>
                 </div>
 
@@ -702,6 +835,7 @@
 
         </div>
     </section>
+    </div>
 
 
     <!-- ════════════════════════════════════════
@@ -727,10 +861,12 @@
                 </a>
             </div>
 
-            <!-- Grid Foto -->
-            <div data-reveal-stagger="100" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <!-- Grid Foto dengan Tinggi Kartu Seragam (Equal Height) -->
+            <div data-reveal-stagger="100" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 items-stretch mb-12">
                 @foreach($galleries as $item)
-                    <x-gallery-item :item="$item" />
+                    <div class="h-full">
+                        <x-gallery-item :item="$item" />
+                    </div>
                 @endforeach
             </div>
 
@@ -741,13 +877,10 @@
     <!-- ════════════════════════════════════════
          10. KONTAK & BANNER RESERVASI
          ════════════════════════════════════════ -->
-    <section id="kontak" class="py-20 sm:py-28 bg-[#EFF3EB]">
+    <section id="kontak" class="py-20 sm:py-28 bg-white border-t border-[#E5E7EB]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <div data-reveal class="text-center max-w-2xl mx-auto mb-14">
-                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-[#1B3B2B] block mb-2">
-                    HUBUNGI KAMI
-                </span>
                 <h2 class="font-serif text-2xl sm:text-4xl font-bold text-[#12271E] tracking-tight">
                     Siap Mewujudkan Ibadah Anda?
                 </h2>
@@ -759,8 +892,11 @@
             <x-contact-card :company="$company" />
 
             <!-- Banner CTA Hijau -->
-            <div data-reveal class="mt-16 bg-[#1B3B2B] rounded-3xl p-8 sm:p-14 text-center text-white shadow-xl">
-                <div class="max-w-xl mx-auto space-y-4">
+            <div data-reveal class="mt-16 bg-[#1B3B2B] rounded-3xl p-8 sm:p-14 text-center text-white shadow-xl relative overflow-hidden border border-[#1B3B2B]">
+                <div class="absolute -right-16 -top-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-[#E8C882]/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="relative max-w-xl mx-auto space-y-4">
                     <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-emerald-300 block">
                     </span>
                     <h3 class="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">
@@ -771,15 +907,16 @@
                     </p>
                     <div class="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3.5">
                         <a href="{{ route('register') }}"
-                           class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-xs sm:text-sm font-semibold text-[#1B3B2B] bg-white hover:bg-zinc-100 transition-colors shadow-sm">
+                           class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-xs sm:text-sm font-semibold text-[#1B3B2B] bg-white hover:bg-zinc-100 transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer">
                             <svg class="w-4 h-4 text-[#1B3B2B]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                             <span>Daftar Akun Online</span>
                         </a>
                         <a href="https://wa.me/{{ $company['whatsapp'] ?? '6281222222562' }}?text=Assalamu%27alaikum%20PT.%20Zein%20Internasional,%20saya%20ingin%20mendaftar%20Umrah/Haji" 
                            target="_blank"
                            rel="noopener noreferrer"
-                           class="inline-flex items-center justify-center px-7 py-3.5 rounded-full text-xs sm:text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/30 transition-colors">
-                            Daftar via WhatsApp
+                           class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-xs sm:text-sm font-medium text-white bg-white/10 hover:bg-white/20 border border-white/30 transition-all duration-200 shadow-sm cursor-pointer">
+                            <svg class="w-4 h-4 fill-current text-emerald-300" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.274.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z"/></svg>
+                            <span>Daftar via WhatsApp</span>
                         </a>
                     </div>
                 </div>

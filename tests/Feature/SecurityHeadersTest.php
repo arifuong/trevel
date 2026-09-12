@@ -22,7 +22,6 @@ class SecurityHeadersTest extends TestCase
     {
         $user = User::factory()->create([
             'role' => 'jamaah',
-            'phone_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->get(route('jamaah.dashboard'));
@@ -35,7 +34,6 @@ class SecurityHeadersTest extends TestCase
     {
         $admin = User::factory()->create([
             'role' => 'admin',
-            'phone_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($admin)->get(route('admin.dashboard'));

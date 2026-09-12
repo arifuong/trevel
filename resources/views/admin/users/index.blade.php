@@ -1,6 +1,19 @@
 <x-layouts.admin :title="'Manajemen Jamaah — PT. Zein Internasional'">
 
-    <div x-data="{ deleteModalOpen: false, selectedUser: { id: null, name: '', phone: '', url: '' } }" class="space-y-6 sm:space-y-8">
+    <div x-data="{ 
+            deleteModalOpen: false, 
+            selectedUser: { id: null, name: '', phone: '', url: '' },
+            openDeleteModal(user) {
+                this.selectedUser = user;
+                this.deleteModalOpen = true;
+                document.body.classList.add('overflow-hidden');
+            },
+            closeDeleteModal() {
+                this.deleteModalOpen = false;
+                this.selectedUser = { id: null, name: '', phone: '', url: '' };
+                document.body.classList.remove('overflow-hidden');
+            }
+        }" class="space-y-6 sm:space-y-8">
         
         {{-- Header Halaman --}}
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -403,24 +416,29 @@
                     {{ $users->links() }}
                 </div>
             @endif
-        </div>
+        </div>        {{-- Modal Konfirmasi Hapus Jamaah (Fixed Viewport Overlay) --}}
+        <template x-teleport="body">
+            <div x-show="deleteModalOpen" 
+                 x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" 
+                 style="display: none;"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="modal-user-title"
+                 @keydown.escape.window="closeDeleteModal()">
 
-        {{-- Modal Konfirmasi Hapus Jamaah --}}
-        <div x-show="deleteModalOpen" 
-             x-transition:enter="ease-out duration-300" 
-             x-transition:enter-start="opacity-0" 
-             x-transition:enter-end="opacity-100" 
-             x-transition:leave="ease-in duration-200" 
-             x-transition:leave-start="opacity-100" 
-             x-transition:leave-end="opacity-0" 
-             class="fixed inset-0 z-50 overflow-y-auto" 
-             style="display: none;"
-             @keydown.escape.window="deleteModalOpen = false">
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-[#122B1F]/60 backdrop-blur-xs" @click="deleteModalOpen = false"></div>
+                {{-- Backdrop --}}
+                <div x-show="deleteModalOpen"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 bg-[#122B1F]/60 backdrop-blur-xs transition-opacity"
+                     @click="closeDeleteModal()"></div>
 
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-
+                {{-- Modal Card --}}
                 <div x-show="deleteModalOpen" 
                      x-transition:enter="ease-out duration-300" 
                      x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
@@ -428,22 +446,22 @@
                      x-transition:leave="ease-in duration-200" 
                      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
                      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
-                     class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-[#E0E7DC] relative z-10"
-                     @click.outside="deleteModalOpen = false">
+                     class="relative w-full sm:max-w-lg bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all border border-[#E0E7DC] z-10 my-auto"
+                     @click.outside="closeDeleteModal()">
                     <div class="bg-white px-6 pt-6 pb-5">
                         <div class="sm:flex sm:items-start gap-4">
-                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-2xl bg-red-100 text-red-600 sm:mx-0">
                                 <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                             </div>
                             <div class="mt-3 text-center sm:mt-0 sm:text-left flex-1">
-                                <h3 class="text-lg font-bold text-[#122B1F]">Hapus Akun Jamaah?</h3>
+                                <h3 class="text-lg font-bold text-[#122B1F]" id="modal-user-title">Hapus Akun Jamaah?</h3>
                                 <div class="mt-2">
                                     <p class="text-sm text-[#526057]">
-                                        Apakah Anda yakin ingin menghapus akun jamaah <span class="font-bold text-[#122B1F]" x-text="selectedUser.name"></span> (<span x-text="selectedUser.phone"></span>)?
+                                        Apakah Anda yakin ingin menghapus akun jamaah <span class="font-bold text-[#12271E]" x-text="selectedUser.name"></span> (<span x-text="selectedUser.phone"></span>)?
                                     </p>
-                                    <p class="text-xs text-red-600 mt-2 bg-red-50 p-2.5 rounded-lg border border-red-100">
+                                    <p class="text-xs text-red-600 mt-2 bg-red-50 p-2.5 rounded-xl border border-red-100">
                                         Perhatian: Seluruh data pendaftaran, berkas dokumen (KTP, KK, Paspor), dan riwayat setoran pembayaran milik akun ini akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
                                     </p>
                                 </div>
@@ -454,17 +472,17 @@
                         <form :action="selectedUser.url" method="POST" class="inline-block w-full sm:w-auto">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="w-full inline-flex justify-center items-center rounded-xl px-5 py-2.5 bg-red-600 text-xs font-bold text-white hover:bg-red-700 focus:outline-none transition-colors shadow-sm cursor-pointer">
+                            <button type="submit" class="w-full inline-flex justify-center items-center rounded-xl px-5 py-2.5 bg-red-600 text-xs font-bold text-white hover:bg-red-700 focus:outline-none transition-colors shadow-xs cursor-pointer">
                                 Ya, Hapus Akun Jamaah
                             </button>
                         </form>
-                        <button type="button" @click="deleteModalOpen = false" class="mt-3 sm:mt-0 w-full inline-flex justify-center items-center rounded-xl border border-[#E0E7DC] bg-white px-5 py-2.5 text-xs font-semibold text-[#122B1F] hover:bg-[#F8FAF7] focus:outline-none transition-colors cursor-pointer">
+                        <button type="button" @click="closeDeleteModal()" class="mt-3 sm:mt-0 w-full inline-flex justify-center items-center rounded-xl border border-[#E0E7DC] bg-white px-5 py-2.5 text-xs font-semibold text-[#122B1F] hover:bg-[#F8FAF7] focus:outline-none transition-colors cursor-pointer">
                             Batal
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
+        </template>
 
     </div>
 

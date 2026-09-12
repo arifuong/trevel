@@ -33,7 +33,6 @@ class JamaahProfileTest extends TestCase
             'phone' => '6281234567890',
             'role' => 'jamaah',
             'password' => Hash::make('password123'),
-            'phone_verified_at' => now(),
         ]);
     }
 

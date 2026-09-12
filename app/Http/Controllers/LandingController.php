@@ -12,8 +12,66 @@ class LandingController extends Controller
      */
     private function getCompanyData()
     {
+        // Ambil video profil utama dari Galeri (is_profile_hero = true)
+        $profileVideo = \App\Models\Gallery::where('is_profile_hero', true)
+            ->where('type', 'video')
+            ->where('is_active', true)
+            ->latest()
+            ->first();
+
+        $videoUrl = $profileVideo?->video_url ?? 'https://youtu.be/QrYcpXEC0RU';
+        $videoTitle = $profileVideo?->title ?? 'Profil PT. Zein Internasional';
+        $youtubeVideoId = $profileVideo?->youtube_id ?? \App\Helpers\YouTubeHelper::extractVideoId($videoUrl);
+        $youtubeEmbedUrl = $profileVideo?->embed_url ?? \App\Helpers\YouTubeHelper::getEmbedUrl($videoUrl);
+
+        // Ambil foto hero profil utama dari Galeri (is_profile_hero = true)
+        $profileHero = \App\Models\Gallery::where('is_profile_hero', true)
+            ->where('type', 'photo')
+            ->where('is_active', true)
+            ->latest()
+            ->first();
+
+        $heroImageUrl = $profileHero?->thumbnail_url ?? 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format,webp&fit=crop&w=800&q=75';
+
+        $aboutSummary = 'PT. ZEIN INTERNASIONAL (Zeintour) adalah salah satu perusahaan penyelenggara perjalanan Ibadah Umrah yang didirikan pada 19 Oktober 2012 di Bandung oleh H. Zenal Abidin, dengan motivasi membangun dua kebaikan (kebaikan dunia dan akhirat).';
+        $aboutDescription = 'Berdasarkan motivasi tersebut, Zeintour bertekad untuk menjadi pelayan para tamu Allah SWT, memberikan kemudahan atas segala hal yang berkaitan dengan proses pelaksanaan ibadahnya, mulai dari persiapan keberangkatan, pelaksanaan ibadah di Tanah Suci, sampai kembali ke tanah air dengan ikhlas dan tawakal kepadaNya, agar semua rangkaian ibadahnya diterima Allah SWT.';
+        $ppiu = 'IZIN KEMENAG RI NOMOR U.255 TAHUN 2020';
+        $pihk = 'IZIN KEMENAG RI NOMOR 599 TAHUN 2021';
+        $visi = "Menjadi penyelenggara Haji dan Umrah dengan pelayanan terbaik berbasis Al Qur'an di Indonesia.";
+        $misi = [
+            'Membantu para calon Jemaah Umrah/Haji dalam pelaksanaan ibadahnya agar benar dan sempurna untuk mencapai ibadah yang mabrur.',
+            'Mengembangkan perusahaan penyelenggara perjalanan ibadah Umrah/Haji yang baik, serta menjadi pembimbing ibadah yang siqah dengan pelayanan prima.',
+            "Mengembangkan Ukhuwah Islamiyah, Silaturrahim dan kerja sama untuk mencapai kehidupan yang rahmatan lil 'alamin.",
+        ];
+        $tujuan = [
+            'Mengelola usaha penyelenggara perjalanan ibadah yang berdimensi dua kebaikan.',
+            'Menjadi salah satu sumber pendapatan yang barokah.',
+            'Menjadi pintu masuk untuk mengembangkan berbagai usaha lain yang berkaitan.',
+        ];
+        $keunggulan = [
+            ['icon' => 'currency', 'title' => 'Harga Paket Terjangkau', 'desc' => 'Harga paket relatif lebih murah dengan pelayanan terbaik.'],
+            ['icon' => 'sliders', 'title' => 'Pilihan Paket Fleksibel', 'desc' => 'Disediakan pilihan paket sesuai dengan kemampuan/kebutuhan jamaah.'],
+            ['icon' => 'kaaba', 'title' => 'Fasilitas Umrah Sunnah', 'desc' => 'Memfasilitasi jamaah untuk melakukan Umrah sunnah.'],
+            ['icon' => 'bolt', 'title' => 'Fast Track Imigrasi', 'desc' => 'Layanan cepat imigrasi di bandara Soekarno Hatta.'],
+            ['icon' => 'lounge', 'title' => 'Lounge Bandara', 'desc' => 'Di bandara disediakan lounge umrah.'],
+            ['icon' => 'guide', 'title' => 'Pembimbing Profesional', 'desc' => 'Pembimbing yang profesional di bidangnya.'],
+        ];
+        $stats = [
+            ['number' => '12000', 'suffix' => '+', 'label' => 'Jamaah Diberangkatkan'],
+            ['number' => '99', 'suffix' => '%', 'label' => 'Tingkat Kepuasan'],
+            ['number' => '14', 'suffix' => '+', 'label' => 'Tahun Pengalaman'],
+            ['number' => '100', 'suffix' => '%', 'label' => 'Izin Resmi Kemenag'],
+        ];
+
         return [
             'name' => 'PT. ZEIN INTERNASIONAL',
+            'about_summary' => $aboutSummary,
+            'about_description' => $aboutDescription,
+            'video_url' => $videoUrl,
+            'video_title' => $videoTitle,
+            'youtube_video_id' => $youtubeVideoId,
+            'youtube_embed_url' => $youtubeEmbedUrl,
+            'hero_image_url' => $heroImageUrl,
             'brand' => 'ZEIN TOUR',
             'alias' => 'ZEIN TOUR',
             'leader' => 'H. ZENAL ABIDIN, M.Si',
@@ -27,8 +85,10 @@ class LandingController extends Controller
             'tdp' => '103114600910',
             'tdup' => '56.3/001/JPW/PAR/2014',
             'akreditasi' => 'IMS-SPPIU-007/03 AGUSTUS 2020/A',
-            'ppiu' => 'PPIU NOMOR U.255 TAHUN 2020',
-            'pihk' => 'PIHK NOMOR 599 TAHUN 2021',
+            'ppiu' => $ppiu,
+            'ppiu_number' => $ppiu,
+            'pihk' => $pihk,
+            'pihk_number' => $pihk,
             'founded_date' => '19 Oktober 2012 di Bandung',
             'founded_year' => '2012',
             'motivation' => 'Membangun dua kebaikan (kebaikan dunia dan akhirat)',
@@ -47,31 +107,11 @@ class LandingController extends Controller
                 'youtube' => 'https://www.youtube.com/@ZEINTV7',
                 'tiktok' => 'https://tiktok.com/@zeintour',
             ],
-            'stats' => [
-                ['number' => '12000', 'suffix' => '+', 'label' => 'Jamaah Diberangkatkan'],
-                ['number' => '99', 'suffix' => '%', 'label' => 'Tingkat Kepuasan'],
-                ['number' => '14', 'suffix' => '+', 'label' => 'Tahun Pengalaman'],
-                ['number' => '100', 'suffix' => '%', 'label' => 'Izin Resmi Kemenag'],
-            ],
-            'visi' => "Menjadi penyelenggara Haji dan Umrah dengan pelayanan terbaik berbasis Al Qur'an di Indonesia.",
-            'misi' => [
-                'Membantu para calon Jemaah Umrah/Haji dalam pelaksanaan ibadahnya agar benar dan sempurna untuk mencapai ibadah yang mabrur.',
-                'Mengembangkan perusahaan penyelenggara perjalanan ibadah Umrah/Haji yang baik, serta menjadi pembimbing ibadah yang siqah dengan pelayanan prima.',
-                "Mengembangkan Ukhuwah Islamiyah, Silaturrahim dan kerja sama untuk mencapai kehidupan yang rahmatan lil 'alamin.",
-            ],
-            'tujuan' => [
-                'Mengelola usaha penyelenggara perjalanan ibadah yang berdimensi dua kebaikan.',
-                'Menjadi salah satu sumber pendapatan yang barokah.',
-                'Menjadi pintu masuk untuk mengembangkan berbagai usaha lain yang berkaitan.',
-            ],
-            'keunggulan' => [
-                'Harga paket relatif lebih murah dengan pelayanan terbaik.',
-                'Disediakan pilihan paket sesuai dengan kemampuan/kebutuhan jamaah.',
-                'Memfasilitasi jamaah untuk melakukan Umrah sunnah.',
-                'Layanan cepat imigrasi di bandara Soekarno Hatta.',
-                'Di bandara disediakan lounge umrah.',
-                'Pembimbing yang profesional di bidangnya.',
-            ],
+            'stats' => $stats,
+            'visi' => $visi,
+            'misi' => $misi,
+            'tujuan' => $tujuan,
+            'keunggulan' => $keunggulan,
         ];
     }
 
@@ -132,13 +172,18 @@ class LandingController extends Controller
     private function getPackagesData()
     {
         $dbPackages = \App\Models\Package::where('status', 'aktif')->with([
+            'includes' => fn($qi) => $qi->orderBy('sort_order'),
+            'excludes' => fn($qe) => $qe->orderBy('sort_order'),
             'variants' => function ($q) {
                 $q->where('status', 'aktif')->orderBy('sort_order')->with([
                     'prices' => fn($qp) => $qp->orderBy('sort_order'),
-                    'includes' => fn($qi) => $qi->orderBy('sort_order'),
-                    'excludes' => fn($qe) => $qe->orderBy('sort_order'),
-                    'hotelPhotos' => fn($qhp) => $qhp->orderBy('sort_order'),
-                    'hotelFacilities'
+                    'airlines',
+                    'hotelMakkah.photos',
+                    'hotelMakkah.facilities',
+                    'hotelMadinah.photos',
+                    'hotelMadinah.facilities',
+                    'overrideIncludes' => fn($qi) => $qi->orderBy('sort_order'),
+                    'overrideExcludes' => fn($qe) => $qe->orderBy('sort_order'),
                 ]);
             }
         ])->get();
@@ -148,13 +193,37 @@ class LandingController extends Controller
         }
 
         return $dbPackages->map(function ($pkg) {
-            $isHaji = str_contains(strtolower($pkg->name), 'haji');
-            
+            $resolvedType = $pkg->package_type ?? (str_contains(strtolower($pkg->name), 'haji') ? 'haji' : 'umrah');
+            $isHaji = $resolvedType === 'haji';
+
             // Map variants (only active variants)
             $variants = $pkg->variants->where('status', 'aktif')->map(function ($var) {
                 $activePrices = $var->prices->where('is_active', true);
                 $lowestPrice = $activePrices->min(fn($p) => $p->promo_price ?? $p->normal_price) ?? 0;
                 
+                $hotelMakkah = $var->hotelMakkah;
+                $hotelMadinah = $var->hotelMadinah;
+                $airlines = $var->airlines;
+                $airlineNames = $var->airlines_display;
+
+                $makkahPhotos = $hotelMakkah ? $hotelMakkah->photos->map(fn($hp) => [
+                    'url' => \App\Helpers\ImageHelper::url($hp->photo_path),
+                    'category' => $hp->category_label ?? $hp->category,
+                    'caption' => $hp->caption,
+                ])->values()->toArray() : [];
+
+                $madinahPhotos = $hotelMadinah ? $hotelMadinah->photos->map(fn($hp) => [
+                    'url' => \App\Helpers\ImageHelper::url($hp->photo_path),
+                    'category' => $hp->category_label ?? $hp->category,
+                    'caption' => $hp->caption,
+                ])->values()->toArray() : [];
+
+                $makkahFacilities = $hotelMakkah ? $hotelMakkah->facilities->pluck('name')->values()->toArray() : [];
+                $madinahFacilities = $hotelMadinah ? $hotelMadinah->facilities->pluck('name')->values()->toArray() : [];
+
+                $mergedIncludes = $var->merged_includes->pluck('item')->values()->toArray();
+                $mergedExcludes = $var->merged_excludes->pluck('item')->values()->toArray();
+
                 return [
                     'id' => $var->id,
                     'name' => $var->name,
@@ -168,29 +237,32 @@ class LandingController extends Controller
                     'is_sold_out' => $var->is_sold_out,
                     'lowest_price' => (float) $lowestPrice,
                     'lowest_price_formatted' => $lowestPrice ? 'Rp ' . number_format((float) $lowestPrice, 0, ',', '.') : '-',
-                    'main_photo' => $var->main_photo ? asset('storage/' . $var->main_photo) : null,
-                    'airline_departure' => $var->airline_departure,
-                    'airline_departure_logo' => $var->airline_departure_logo ? asset('storage/' . $var->airline_departure_logo) : null,
-                    'airline_return' => $var->airline_return,
-                    'airline_return_logo' => $var->airline_return_logo ? asset('storage/' . $var->airline_return_logo) : null,
-                    'hotel_makkah_name' => $var->hotel_makkah_name,
-                    'hotel_makkah_star' => $var->hotel_makkah_star,
-                    'hotel_makkah_description' => $var->hotel_makkah_description,
-                    'hotel_makkah_photos' => $var->hotelPhotos->where('hotel_type', 'makkah')->map(fn($hp) => [
-                        'url' => asset('storage/' . $hp->photo_path),
-                        'category' => $hp->category,
-                        'caption' => $hp->caption,
+                    'main_photo' => \App\Helpers\ImageHelper::url($var->main_photo),
+                    'airline' => $airlineNames,
+                    'airline_departure' => $airlineNames,
+                    'airline_departure_logo' => \App\Helpers\ImageHelper::url($airlines->first()?->logo),
+                    'airline_return' => $airlineNames,
+                    'airline_return_logo' => \App\Helpers\ImageHelper::url(($airlines->count() > 1 && $airlines->last()->logo) ? $airlines->last()->logo : $airlines->first()?->logo),
+                    'airlines' => $airlines->map(fn($a) => [
+                        'id' => $a->id,
+                        'name' => $a->name,
+                        'code' => $a->code,
+                        'logo' => \App\Helpers\ImageHelper::url($a->logo),
                     ])->values()->toArray(),
-                    'hotel_madinah_name' => $var->hotel_madinah_name,
-                    'hotel_madinah_star' => $var->hotel_madinah_star,
-                    'hotel_madinah_description' => $var->hotel_madinah_description,
-                    'hotel_madinah_photos' => $var->hotelPhotos->where('hotel_type', 'madinah')->map(fn($hp) => [
-                        'url' => asset('storage/' . $hp->photo_path),
-                        'category' => $hp->category,
-                        'caption' => $hp->caption,
-                    ])->values()->toArray(),
-                    'makkah_facilities' => $var->hotelFacilities->where('pivot.hotel_type', 'makkah')->pluck('name')->values()->toArray(),
-                    'madinah_facilities' => $var->hotelFacilities->where('pivot.hotel_type', 'madinah')->pluck('name')->values()->toArray(),
+                    'hotel_makkah_name' => $hotelMakkah?->name,
+                    'hotel_makkah_star' => $hotelMakkah?->star_rating,
+                    'hotel_makkah_distance' => $hotelMakkah?->distance_to_haram,
+                    'hotel_makkah_description' => $hotelMakkah?->description,
+                    'hotel_makkah_main_photo' => \App\Helpers\ImageHelper::url($hotelMakkah?->main_photo),
+                    'hotel_makkah_photos' => $makkahPhotos,
+                    'hotel_madinah_name' => $hotelMadinah?->name,
+                    'hotel_madinah_star' => $hotelMadinah?->star_rating,
+                    'hotel_madinah_distance' => $hotelMadinah?->distance_to_haram,
+                    'hotel_madinah_description' => $hotelMadinah?->description,
+                    'hotel_madinah_main_photo' => \App\Helpers\ImageHelper::url($hotelMadinah?->main_photo),
+                    'hotel_madinah_photos' => $madinahPhotos,
+                    'makkah_facilities' => $makkahFacilities,
+                    'madinah_facilities' => $madinahFacilities,
                     'prices' => $var->prices->where('is_active', true)->filter(fn($p) => (float) $p->normal_price > 0)->map(function ($p) {
                         return [
                             'id' => $p->id,
@@ -205,8 +277,8 @@ class LandingController extends Controller
                             'is_active' => (bool) $p->is_active,
                         ];
                     })->values()->toArray(),
-                    'includes' => $var->includes->pluck('item')->values()->toArray(),
-                    'excludes' => $var->excludes->pluck('item')->values()->toArray(),
+                    'includes' => $mergedIncludes,
+                    'excludes' => $mergedExcludes,
                 ];
             })->values()->toArray();
 
@@ -224,7 +296,7 @@ class LandingController extends Controller
             $allSoldOut = $pkg->is_sold_out;
 
             $mainPhotoUrl = $pkg->main_photo 
-                ? asset('storage/' . $pkg->main_photo) 
+                ? \App\Helpers\ImageHelper::url($pkg->main_photo) 
                 : ($isHaji 
                     ? 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fm=webp&fit=crop&w=480&q=70'
                     : 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fm=webp&fit=crop&w=480&q=70');
@@ -232,8 +304,8 @@ class LandingController extends Controller
             return [
                 'id' => $pkg->id,
                 'slug' => $pkg->slug,
-                'type' => $isHaji ? 'haji' : 'umrah',
-                'type_label' => $isHaji ? 'Haji Khusus' : 'Umrah Reguler',
+                'type' => $resolvedType,
+                'type_label' => $pkg->type_label,
                 'name' => $pkg->name,
                 'badge' => $allSoldOut ? 'Sold Out' : ($lowestPrice >= 35000000 ? 'VIP Exclusive' : 'Paling Diminati'),
                 'badge_color' => $allSoldOut ? 'red' : 'gold',
@@ -243,7 +315,7 @@ class LandingController extends Controller
                 'departure_date' => $pkg->departure_date ? $pkg->departure_date->translatedFormat('d F Y') : '-',
                 'hotel_makkah' => !empty($variants[0]['hotel_makkah_name']) ? $variants[0]['hotel_makkah_name'] : 'Pullman Zamzam / Setaraf (★5)',
                 'hotel_madinah' => !empty($variants[0]['hotel_madinah_name']) ? $variants[0]['hotel_madinah_name'] : 'Grand Plaza / Setaraf (★4)',
-                'airline' => !empty($variants[0]['airline_departure']) ? $variants[0]['airline_departure'] : 'Saudia Airlines / Garuda Indonesia (Direct)',
+                'airline' => !empty($variants[0]['airline']) ? $variants[0]['airline'] : 'Saudia Airlines / Garuda Indonesia (Direct)',
                 'seats_total' => $totalQuota,
                 'seats_available' => $remainingQuota,
                 'featured' => $pkg->status === 'aktif' && !$allSoldOut,
@@ -252,25 +324,19 @@ class LandingController extends Controller
                 'thumbnail' => $mainPhotoUrl,
                 'description' => $pkg->description ?: 'Perjalanan ibadah penuh kekhusyukan bersama PT. Zein Internasional dengan fasilitas terbaik, kepastian seat, dan pembimbing berpengalaman.',
                 'variants' => $variants,
-                'includes' => !empty($variants[0]['includes']) ? $variants[0]['includes'] : (!empty($pkg->facilities_array) ? $pkg->facilities_array : [
+                'includes' => $pkg->includes->isNotEmpty() ? $pkg->includes->pluck('item')->values()->toArray() : (!empty($variants[0]['includes']) ? $variants[0]['includes'] : [
                     'Tiket Pesawat PP Direct',
                     'Visa & Asuransi Perjalanan',
                     'Hotel Makkah & Madinah Bintang 4/5',
                     'Makan 3x sehari menu Indonesia (Fullboard)',
                     'Pembimbing Ibadah (Muthawwif) berpengalaman',
                 ]),
-                'excludes' => !empty($variants[0]['excludes']) ? $variants[0]['excludes'] : [
+                'excludes' => $pkg->excludes->isNotEmpty() ? $pkg->excludes->pluck('item')->values()->toArray() : (!empty($variants[0]['excludes']) ? $variants[0]['excludes'] : [
                     'Pembuatan / Perpanjangan Paspor',
                     'Buku Kuning Vaksin Meningitis / Polio',
                     'Pengeluaran Pribadi (Laundry, Roaming, dll)',
                     'Kelebihan bagasi di luar ketentuan maskapai',
-                ],
-                'itinerary' => [
-                    ['day' => 'Hari 1', 'title' => 'Jakarta - Jeddah - Madinah', 'desc' => 'Berkumpul di Bandara Soekarno-Hatta, penerbangan langsung menuju Madinah/Jeddah, check-in hotel dan istirahat.'],
-                    ['day' => 'Hari 2-3', 'title' => 'Madinah - Ziarah Raudhah & Masjid Nabawi', 'desc' => 'Ibadah di Masjid Nabawi, ziarah Makam Rasulullah SAW, Raudhah, Masjid Quba, dan Jabal Uhud.'],
-                    ['day' => 'Hari 4-7', 'title' => 'Makkah - Pelaksanaan Ibadah & Ziarah', 'desc' => 'Mengambil Miqat, menuju Makkah, pelaksanaan Umrah/Haji dan ziarah tempat bersejarah.'],
-                    ['day' => 'Hari ' . $pkg->duration, 'title' => 'Kepulangan ke Jakarta', 'desc' => 'Tawaf Wada, transfer ke bandara dan penerbangan kembali ke tanah air.'],
-                ],
+                ]),
             ];
         })->toArray();
     }
@@ -531,8 +597,8 @@ class LandingController extends Controller
                 'type' => 'image',
                 'title' => 'Ziarah Sejarah di Jabal Uhud Madinah',
                 'category' => 'Ziarah',
-                'url' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fm=webp&fit=crop&w=1200&q=80',
-                'thumb' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fm=webp&fit=crop&w=480&q=70',
+                'url' => 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fm=webp&fit=crop&w=1200&q=80',
+                'thumb' => 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fm=webp&fit=crop&w=480&q=70',
             ],
             [
                 'type' => 'image',
@@ -673,9 +739,20 @@ class LandingController extends Controller
         $travelScheme = $this->getTravelScheme();
         $saudiServices = $this->getSaudiServices();
         $pilgrimRights = $this->getPilgrimRights();
-        $galleries = array_slice($this->getGalleryData(), 0, 6);
+        $dbGalleries = \App\Models\Gallery::where('is_active', true)
+            ->orderBy('sort_order')
+            ->latest()
+            ->take(6)
+            ->get();
+        $galleries = $dbGalleries->isNotEmpty() ? $dbGalleries : array_slice($this->getGalleryData(), 0, 6);
         $partners = $this->getPartners();
         $authorized = $this->getAuthorizedInstitutions();
+
+        $profileVideo = \App\Models\Gallery::where('is_profile_hero', true)
+            ->where('type', 'video')
+            ->where('is_active', true)
+            ->latest()
+            ->first();
 
         return view('landing', compact(
             'company',
@@ -687,7 +764,8 @@ class LandingController extends Controller
             'pilgrimRights',
             'galleries',
             'partners',
-            'authorized'
+            'authorized',
+            'profileVideo'
         ));
     }
 
@@ -699,7 +777,19 @@ class LandingController extends Controller
         $company = $this->getCompanyData();
         $legalities = $this->getLegalityData();
 
-        return view('pages.profil', compact('company', 'legalities'));
+        $profileHero = \App\Models\Gallery::where('is_profile_hero', true)
+            ->where('type', 'photo')
+            ->where('is_active', true)
+            ->latest()
+            ->first();
+
+        $profileVideo = \App\Models\Gallery::where('is_profile_hero', true)
+            ->where('type', 'video')
+            ->where('is_active', true)
+            ->latest()
+            ->first();
+
+        return view('pages.profil', compact('company', 'legalities', 'profileHero', 'profileVideo'));
     }
 
     /**
@@ -760,9 +850,23 @@ class LandingController extends Controller
     public function galeri()
     {
         $company = $this->getCompanyData();
-        $galleries = $this->getGalleryData();
+        $dbGalleries = \App\Models\Gallery::where('is_active', true)
+            ->orderBy('sort_order')
+            ->latest()
+            ->get();
 
-        return view('pages.galeri', compact('company', 'galleries'));
+        $galleries = $dbGalleries->isNotEmpty() ? $dbGalleries : collect($this->getGalleryData());
+
+        $featuredVideo = \App\Models\Gallery::where('is_profile_hero', true)
+            ->where('type', 'video')
+            ->where('is_active', true)
+            ->latest()
+            ->first() ?? \App\Models\Gallery::where('type', 'video')
+            ->where('is_active', true)
+            ->latest()
+            ->first();
+
+        return view('pages.galeri', compact('company', 'galleries', 'featuredVideo'));
     }
 
     /**

@@ -28,6 +28,8 @@ class Package extends Model
         'facilities',
         'quota',
         'status',
+        'package_type',
+        'category_label',
         'description',
         'main_photo',
     ];
@@ -61,7 +63,39 @@ class Package extends Model
         'remaining_quota',
         'total_quota',
         'status_label',
+        'type_label',
     ];
+
+    /**
+     * Label kategori paket untuk badge di kartu & halaman detail.
+     * Prioritas: category_label (custom dari admin) > auto-generate dari package_type.
+     */
+    protected function typeLabel(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if (!empty($this->category_label)) {
+                    return $this->category_label;
+                }
+
+                $name = trim($this->name ?? '');
+                // Bersihkan awalan "Paket" bila ada
+                $cleanName = trim(preg_replace('/^paket\s+/i', '', $name));
+
+                // Ekstrak kategori jika diawali Umrah/Umroh atau Haji
+                if (preg_match('/^(umr[ao]h|haji)\s+([a-z0-9\s\-]+)/i', $cleanName, $matches)) {
+                    $prefix = strtolower($matches[1]) === 'umroh' ? 'Umrah' : \Illuminate\Support\Str::title($matches[1]);
+                    // Bersihkan embel-embel durasi atau tahun seperti "12 Hari", "1447H", "2026" di ujung nama
+                    $suffix = preg_replace('/\s+(\d+\s*(hari|day[s]?)|\d{4}h?)$/i', '', trim($matches[2]));
+                    if (!empty($suffix)) {
+                        return $prefix . ' ' . \Illuminate\Support\Str::title($suffix);
+                    }
+                }
+
+                return ($this->package_type ?? 'umrah') === 'haji' ? 'Haji Khusus' : 'Umrah Reguler';
+            }
+        );
+    }
 
     /**
      * Helper accessor untuk harga terformat rupiah.
@@ -187,6 +221,24 @@ class Package extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(PackageVariant::class);
+    }
+
+    /**
+     * Daftar item "Biaya Termasuk" (Include) di level paket induk.
+     * Berlaku default untuk semua sub-paket, kecuali ada override.
+     */
+    public function includes(): HasMany
+    {
+        return $this->hasMany(PackageInclude::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Daftar item "Biaya Tidak Termasuk" (Exclude) di level paket induk.
+     * Berlaku default untuk semua sub-paket, kecuali ada override.
+     */
+    public function excludes(): HasMany
+    {
+        return $this->hasMany(PackageExclude::class)->orderBy('sort_order');
     }
 
     public function getLowestPriceAttribute()

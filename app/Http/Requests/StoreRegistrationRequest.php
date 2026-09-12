@@ -9,7 +9,7 @@ class StoreRegistrationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() && $this->user()->isJamaah() && $this->user()->phone_verified_at !== null;
+        return $this->user() && $this->user()->isJamaah();
     }
 
     /**

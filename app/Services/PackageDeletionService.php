@@ -78,10 +78,14 @@ class PackageDeletionService
                 $package->delete();
             });
 
-            // 5. Bersihkan file fisik storage HANYA milik paket yang dihapus
+            // 5. Bersihkan file fisik storage HANYA milik paket yang dihapus (termasuk WebP pendamping)
             foreach ($filesToDelete as $filePath) {
                 if ($filePath && Storage::disk('public')->exists($filePath)) {
                     Storage::disk('public')->delete($filePath);
+                }
+                $webpPath = preg_replace('/\.(jpe?g|png)$/i', '.webp', $filePath);
+                if ($webpPath !== $filePath && Storage::disk('public')->exists($webpPath)) {
+                    Storage::disk('public')->delete($webpPath);
                 }
             }
 

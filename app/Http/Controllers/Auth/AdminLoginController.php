@@ -11,7 +11,7 @@ class AdminLoginController extends Controller
 {
     /**
      * Tampilkan form login admin.
-     * Login admin terpisah di /admin/login (email + password, tanpa OTP).
+     * Login admin terpisah di /admin/login (email + password).
      */
     public function showForm()
     {

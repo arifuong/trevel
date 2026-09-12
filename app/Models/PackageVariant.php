@@ -15,14 +15,15 @@ class PackageVariant extends Model
     protected $fillable = [
         'package_id', 'name', 'slug', 'description', 'main_photo',
         'quota', 'status', 'sort_order',
-        'airline_departure', 'airline_departure_logo', 'airline_return', 'airline_return_logo',
-        'hotel_makkah_name', 'hotel_makkah_star', 'hotel_makkah_description',
-        'hotel_madinah_name', 'hotel_madinah_star', 'hotel_madinah_description',
+        'hotel_makkah_id', 'hotel_madinah_id',
+        'has_include_override', 'has_exclude_override',
     ];
 
     protected $casts = [
         'quota' => 'integer',
         'sort_order' => 'integer',
+        'has_include_override' => 'boolean',
+        'has_exclude_override' => 'boolean',
     ];
 
     protected $appends = ['lowest_price', 'lowest_price_formatted', 'is_sold_out', 'remaining_quota', 'status_label'];
@@ -44,46 +45,115 @@ class PackageVariant extends Model
         });
     }
 
-    // Relationships
+    // =============================================
+    // RELATIONSHIPS
+    // =============================================
+
     public function package() { return $this->belongsTo(Package::class); }
     public function prices() { return $this->hasMany(PackageVariantPrice::class); }
-    public function hotelPhotos() { return $this->hasMany(PackageVariantHotelPhoto::class); }
-    public function includes() { return $this->hasMany(PackageVariantInclude::class)->orderBy('sort_order'); }
-    public function excludes() { return $this->hasMany(PackageVariantExclude::class)->orderBy('sort_order'); }
     public function registrations() { return $this->hasMany(Registration::class); }
-    
-    public function hotelFacilities()
+
+    /**
+     * Hotel Makkah dari master data.
+     */
+    public function hotelMakkah()
     {
-        return $this->belongsToMany(HotelFacility::class, 'package_variant_hotel_facilities')
-            ->withPivot('hotel_type')
-            ->withTimestamps();
-    }
-    
-    public function makkahFacilities()
-    {
-        return $this->belongsToMany(HotelFacility::class, 'package_variant_hotel_facilities')
-            ->wherePivot('hotel_type', 'makkah')
-            ->withTimestamps();
-    }
-    
-    public function madinahFacilities()
-    {
-        return $this->belongsToMany(HotelFacility::class, 'package_variant_hotel_facilities')
-            ->wherePivot('hotel_type', 'madinah')
-            ->withTimestamps();
+        return $this->belongsTo(Hotel::class, 'hotel_makkah_id');
     }
 
-    public function makkahPhotos()
+    /**
+     * Hotel Madinah dari master data.
+     */
+    public function hotelMadinah()
     {
-        return $this->hotelPhotos()->where('hotel_type', 'makkah')->orderBy('sort_order');
+        return $this->belongsTo(Hotel::class, 'hotel_madinah_id');
     }
 
-    public function madinahPhotos()
+    /**
+     * Maskapai (many-to-many via pivot airline_package_variant).
+     */
+    public function airlines()
     {
-        return $this->hotelPhotos()->where('hotel_type', 'madinah')->orderBy('sort_order');
+        return $this->belongsToMany(Airline::class, 'airline_package_variant')
+            ->withPivot('sort_order')
+            ->withTimestamps()
+            ->orderByPivot('sort_order');
     }
 
-    // Accessors
+    /**
+     * Override include items khusus tier ini (opsional, di atas default induk).
+     */
+    public function overrideIncludes()
+    {
+        return $this->hasMany(PackageVariantInclude::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Override exclude items khusus tier ini (opsional, di atas default induk).
+     */
+    public function overrideExcludes()
+    {
+        return $this->hasMany(PackageVariantExclude::class)->orderBy('sort_order');
+    }
+
+    // =============================================
+    // COMPUTED: MERGED INCLUDE/EXCLUDE
+    // =============================================
+
+    /**
+     * Gabungan daftar include: dari paket induk + override tier (jika ada).
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getMergedIncludesAttribute()
+    {
+        $parentIncludes = $this->package ? $this->package->includes : collect();
+
+        if ($this->has_include_override) {
+            $overrides = $this->relationLoaded('overrideIncludes')
+                ? $this->overrideIncludes
+                : $this->overrideIncludes()->get();
+            return $parentIncludes->merge($overrides);
+        }
+
+        return $parentIncludes;
+    }
+
+    /**
+     * Gabungan daftar exclude: dari paket induk + override tier (jika ada).
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getMergedExcludesAttribute()
+    {
+        $parentExcludes = $this->package ? $this->package->excludes : collect();
+
+        if ($this->has_exclude_override) {
+            $overrides = $this->relationLoaded('overrideExcludes')
+                ? $this->overrideExcludes
+                : $this->overrideExcludes()->get();
+            return $parentExcludes->merge($overrides);
+        }
+
+        return $parentExcludes;
+    }
+
+    /**
+     * Nama maskapai digabung dengan separator "/", contoh: "Saudia / Qatar Airways"
+     */
+    public function getAirlinesDisplayAttribute(): string
+    {
+        $airlines = $this->relationLoaded('airlines')
+            ? $this->airlines
+            : $this->airlines()->get();
+
+        return $airlines->pluck('name')->implode(' / ');
+    }
+
+    // =============================================
+    // PRICING ACCESSORS (unchanged)
+    // =============================================
+
     protected function lowestPrice(): Attribute
     {
         return Attribute::get(function () {
@@ -106,6 +176,10 @@ class PackageVariant extends Model
             return $price ? 'Rp ' . number_format((float) $price, 0, ',', '.') : '-';
         });
     }
+
+    // =============================================
+    // QUOTA ACCESSORS (unchanged)
+    // =============================================
 
     /**
      * Hitung jumlah jamaah aktif pada sub-paket ini (tidak termasuk yang dibatalkan / approved cancellation).

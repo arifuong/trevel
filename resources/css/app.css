@@ -159,3 +159,69 @@ header#navbar nav button:hover {
     from { opacity: 0; }
     to   { opacity: 1; }
 }
+
+/* ==================================================================
+   UNIVERSAL PARALLAX & FIXED BACKGROUND SYSTEM
+   Guaranteed visible across Desktop, Laptop, iPad Pro, iPad Air,
+   Surface Pro 7, Nest Hub, Nest Hub Max, Tablets & Mobile Phones.
+   Zero gaps, zero seams, zero borders between photo sections.
+   ================================================================== */
+
+.fixed-bg-section {
+    position: relative;
+    overflow: hidden;
+    background-color: #06140D !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: cover !important;
+    border: none !important;
+    outline: none !important;
+}
+
+/* Eliminate any subpixel gap, white line, or seam between adjacent photo sections */
+.fixed-bg-section + .fixed-bg-section {
+    margin-top: -1px !important;
+    border-top: none !important;
+}
+
+.parallax-bg-layer,
+.mobile-parallax-layer {
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    width: 100%;
+    height: calc(100% + 4px);
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+    border: none !important;
+}
+
+.parallax-bg-img,
+.mobile-parallax-img {
+    position: absolute;
+    top: -2px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh + 4px);
+    height: calc(100dvh + 4px);
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat !important;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+    border: none !important;
+}
+
+/* Desktop with mouse: native 120fps background-attachment: fixed */
+@media (hover: hover) and (pointer: fine) and (min-width: 1025px) {
+    .parallax-bg-img,
+    .mobile-parallax-img {
+        height: calc(100% + 4px) !important;
+        background-attachment: fixed !important;
+        transform: none !important;
+        will-change: auto;
+    }
+}

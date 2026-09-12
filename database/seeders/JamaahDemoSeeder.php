@@ -20,7 +20,6 @@ class JamaahDemoSeeder extends Seeder
                 'phone' => '6281234567890',
                 'password' => Hash::make('password123'),
                 'role' => 'jamaah',
-                'phone_verified_at' => now(),
             ]
         );
     }

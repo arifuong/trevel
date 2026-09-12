@@ -28,17 +28,14 @@ class PackageQuotaValidationTest extends TestCase
 
         $this->jamaah1 = User::factory()->create([
             'role' => 'jamaah',
-            'phone_verified_at' => now(),
         ]);
 
         $this->jamaah2 = User::factory()->create([
             'role' => 'jamaah',
-            'phone_verified_at' => now(),
         ]);
 
         $this->admin = User::factory()->create([
             'role' => 'admin',
-            'phone_verified_at' => now(),
         ]);
     }
 

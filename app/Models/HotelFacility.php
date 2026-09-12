@@ -10,10 +10,16 @@ class HotelFacility extends Model
         'name', 'sort_order',
     ];
 
-    public function variants()
+    protected $casts = [
+        'sort_order' => 'integer',
+    ];
+
+    /**
+     * Hotels yang memiliki fasilitas ini (many-to-many via hotel_hotel_facility).
+     */
+    public function hotels()
     {
-        return $this->belongsToMany(PackageVariant::class, 'package_variant_hotel_facilities')
-            ->withPivot('hotel_type')
+        return $this->belongsToMany(Hotel::class, 'hotel_hotel_facility')
             ->withTimestamps();
     }
 }

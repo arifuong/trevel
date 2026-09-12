@@ -26,6 +26,25 @@ if ($uri !== '/' && file_exists($filePath) && !is_dir($filePath)) {
     ];
 
     $mime = $mimes[$ext] ?? 'application/octet-stream';
+    $compressible = in_array($ext, ['css', 'js', 'svg', 'xml', 'txt'], true);
+    $acceptGzip = function_exists('gzencode') && str_contains($_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', 'gzip');
+
+    if ($compressible && $acceptGzip) {
+        $content = file_get_contents($filePath);
+        $compressed = gzencode($content, 6);
+        if ($compressed !== false) {
+            header('Content-Type: ' . $mime);
+            header('Cache-Control: public, max-age=31536000, immutable');
+            header('X-Content-Type-Options: nosniff');
+            header('Access-Control-Allow-Origin: *');
+            header('Content-Encoding: gzip');
+            header('Vary: Accept-Encoding');
+            header('Content-Length: ' . strlen($compressed));
+            echo $compressed;
+            exit;
+        }
+    }
+
     header('Content-Type: ' . $mime);
     header('Cache-Control: public, max-age=31536000, immutable');
     header('X-Content-Type-Options: nosniff');

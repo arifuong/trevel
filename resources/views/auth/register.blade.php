@@ -132,7 +132,7 @@
                             </div>
                             <p id="phone-hint" class="mt-1 text-[10.5px] text-[#526057] flex items-center gap-1">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                                <span>Kode OTP verifikasi akan dikirimkan ke nomor WhatsApp ini.</span>
+                                <span>Nomor aktif untuk informasi pendaftaran dan keberangkatan ibadah.</span>
                             </p>
                             @error('phone')
                                 <p id="phone-error" class="mt-1 text-[11px] text-red-600 font-medium flex items-center gap-1">

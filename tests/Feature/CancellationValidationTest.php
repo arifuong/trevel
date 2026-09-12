@@ -9,7 +9,7 @@ use App\Models\Registration;
 use App\Models\RegistrationCancellation;
 use App\Models\RegistrationMember;
 use App\Models\User;
-use App\Services\WhatsappOtpInterface;
+use App\Contracts\WhatsAppNotificationInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -29,10 +29,10 @@ class CancellationValidationTest extends TestCase
     {
         parent::setUp();
 
-        // Mock WhatsApp OTP
-        $mockWhatsapp = $this->createMock(WhatsappOtpInterface::class);
+        // Mock WhatsApp Notification
+        $mockWhatsapp = $this->createMock(WhatsAppNotificationInterface::class);
         $mockWhatsapp->method('sendMessage')->willReturn(true);
-        $this->app->instance(WhatsappOtpInterface::class, $mockWhatsapp);
+        $this->app->instance(WhatsAppNotificationInterface::class, $mockWhatsapp);
 
         // 1. Setup Admin
         $this->admin = User::factory()->create([
@@ -40,7 +40,6 @@ class CancellationValidationTest extends TestCase
             'email' => 'admin@zeintour.com',
             'role' => 'admin',
             'password' => Hash::make('password123'),
-            'phone_verified_at' => now(),
         ]);
 
         // 2. Setup Jamaah 1
@@ -50,7 +49,6 @@ class CancellationValidationTest extends TestCase
             'phone' => '6281234567890',
             'role' => 'jamaah',
             'password' => Hash::make('password123'),
-            'phone_verified_at' => now(),
         ]);
 
         // 3. Setup Jamaah 2
@@ -60,7 +58,6 @@ class CancellationValidationTest extends TestCase
             'phone' => '6289876543210',
             'role' => 'jamaah',
             'password' => Hash::make('password123'),
-            'phone_verified_at' => now(),
         ]);
 
         // 4. Setup Package

@@ -41,7 +41,6 @@ class InvoiceAndReceiptTest extends TestCase
             'email' => 'jamaah1@test.com',
             'name' => 'AHMAD FARID KAMALUDIN',
             'phone' => '081234567890',
-            'phone_verified_at' => now(),
         ]);
 
         // 3. Jamaah 2
@@ -50,7 +49,6 @@ class InvoiceAndReceiptTest extends TestCase
             'email' => 'jamaah2@test.com',
             'name' => 'SITI NURHALIZA',
             'phone' => '081298765432',
-            'phone_verified_at' => now(),
         ]);
 
         // 4. Paket
@@ -438,24 +436,145 @@ class InvoiceAndReceiptTest extends TestCase
         $response->assertSee('Download');
     }
 
-    public function test_viewing_invoice_auto_generates_physical_xlsx_file_if_not_present()
+    public function test_viewing_invoice_does_not_save_files_to_disk()
     {
         $invoiceNumber = $this->reg1->invoice->invoice_number;
         $cleanNumber = str_replace(['/', '\\', ' '], '_', $invoiceNumber);
         $expectedFilePath = storage_path("app/documents/invoices/Invoice_{$cleanNumber}.xlsx");
 
-        // Hapus file jika sebelumnya ada untuk menguji auto-generate
         if (file_exists($expectedFilePath)) {
             unlink($expectedFilePath);
         }
 
         $this->assertFileDoesNotExist($expectedFilePath);
 
-        // Admin buka halaman invoice (Lihat Invoice)
+        // Buka halaman invoice
         $response = $this->actingAs($this->admin)->get(route('documents.invoice', $this->reg1));
         $response->assertOk();
 
-        // File fisik Excel harus otomatis ter-generate dan tersimpan di storage/app/documents/invoices/
-        $this->assertFileExists($expectedFilePath);
+        // Tidak boleh ada file fisik yang tersimpan di disk
+        $this->assertFileDoesNotExist($expectedFilePath);
+    }
+
+    public function test_jamaah_and_admin_can_download_invoice_pdf_on_the_fly_without_disk_storage()
+    {
+        $invoiceNumber = $this->reg1->invoice->invoice_number;
+        $cleanNumber = str_replace(['/', '\\', ' '], '-', $invoiceNumber);
+        $expectedFilename = "Invoice-{$cleanNumber}.pdf";
+
+        // Pastikan tidak ada file sebelum request
+        $invoiceDir = storage_path('app/documents/invoices');
+        $filesBefore = file_exists($invoiceDir) ? glob($invoiceDir . '/*') : [];
+
+        // 1. Jamaah unduh PDF invoice miliknya
+        $resJamaah = $this->actingAs($this->jamaah1)->get(route('documents.invoice.pdf', $this->reg1));
+        $resJamaah->assertOk();
+        $this->assertEquals('application/pdf', $resJamaah->headers->get('content-type'));
+        $this->assertStringContainsString('attachment', $resJamaah->headers->get('content-disposition'));
+        $this->assertStringContainsString($expectedFilename, $resJamaah->headers->get('content-disposition'));
+
+        // 2. Admin unduh PDF invoice
+        $resAdmin = $this->actingAs($this->admin)->get(route('documents.invoice.pdf', $this->reg1));
+        $resAdmin->assertOk();
+        $this->assertEquals('application/pdf', $resAdmin->headers->get('content-type'));
+
+        // 3. Stream PDF di browser (stream=1)
+        $resStream = $this->actingAs($this->jamaah1)->get(route('documents.invoice.pdf', ['registration' => $this->reg1, 'stream' => 1]));
+        $resStream->assertOk();
+        $this->assertEquals('application/pdf', $resStream->headers->get('content-type'));
+        $this->assertStringContainsString('inline', $resStream->headers->get('content-disposition'));
+        $this->assertStringContainsString($expectedFilename, $resStream->headers->get('content-disposition'));
+
+        // Pastikan tidak ada file baru yang tersimpan di storage/app/documents/invoices
+        $filesAfter = file_exists($invoiceDir) ? glob($invoiceDir . '/*') : [];
+        $this->assertCount(count($filesBefore), $filesAfter);
+    }
+
+    public function test_jamaah_and_admin_can_download_receipt_pdf_on_the_fly_without_disk_storage()
+    {
+        $payment = Payment::create([
+            'registration_id' => $this->reg1->id,
+            'type' => Payment::TYPE_DP,
+            'amount' => 10000000,
+            'proof_file' => 'payments/proof_dp.jpg',
+            'status' => Payment::STATUS_DISETUJUI,
+            'receipt_number' => 'KWT-2026-00001',
+            'verified_at' => now(),
+            'verified_by' => $this->admin->id,
+        ]);
+
+        $cleanNumber = str_replace(['/', '\\', ' '], '-', $payment->receipt_number);
+        $expectedFilename = "Kwitansi-{$cleanNumber}.pdf";
+
+        $receiptDir = storage_path('app/documents/receipts');
+        $filesBefore = file_exists($receiptDir) ? glob($receiptDir . '/*') : [];
+
+        // 1. Jamaah unduh PDF kwitansi miliknya
+        $resJamaah = $this->actingAs($this->jamaah1)->get(route('documents.receipt.pdf', $payment));
+        $resJamaah->assertOk();
+        $this->assertEquals('application/pdf', $resJamaah->headers->get('content-type'));
+        $this->assertStringContainsString('attachment', $resJamaah->headers->get('content-disposition'));
+        $this->assertStringContainsString($expectedFilename, $resJamaah->headers->get('content-disposition'));
+
+        // 2. Admin unduh PDF kwitansi
+        $resAdmin = $this->actingAs($this->admin)->get(route('documents.receipt.pdf', $payment));
+        $resAdmin->assertOk();
+        $this->assertEquals('application/pdf', $resAdmin->headers->get('content-type'));
+
+        // 3. Stream kwitansi di browser (stream=1)
+        $resStream = $this->actingAs($this->jamaah1)->get(route('documents.receipt.pdf', ['payment' => $payment, 'stream' => 1]));
+        $resStream->assertOk();
+        $this->assertEquals('application/pdf', $resStream->headers->get('content-type'));
+        $this->assertStringContainsString('inline', $resStream->headers->get('content-disposition'));
+        $this->assertStringContainsString($expectedFilename, $resStream->headers->get('content-disposition'));
+
+        // Pastikan tidak ada file baru yang tersimpan di disk
+        $filesAfter = file_exists($receiptDir) ? glob($receiptDir . '/*') : [];
+        $this->assertCount(count($filesBefore), $filesAfter);
+    }
+
+    public function test_jamaah_cannot_download_another_users_pdf_documents()
+    {
+        $payment2 = Payment::create([
+            'registration_id' => $this->reg2->id,
+            'type' => Payment::TYPE_DP,
+            'amount' => 10000000,
+            'proof_file' => 'payments/proof2.jpg',
+            'status' => Payment::STATUS_DISETUJUI,
+            'receipt_number' => 'KWT-2026-00002',
+            'verified_at' => now(),
+            'verified_by' => $this->admin->id,
+        ]);
+
+        // Jamaah 1 coba unduh PDF invoice Jamaah 2 -> 403 Forbidden
+        $resInv = $this->actingAs($this->jamaah1)->get(route('documents.invoice.pdf', $this->reg2));
+        $resInv->assertForbidden();
+
+        // Jamaah 1 coba unduh PDF kwitansi Jamaah 2 -> 403 Forbidden
+        $resRec = $this->actingAs($this->jamaah1)->get(route('documents.receipt.pdf', $payment2));
+        $resRec->assertForbidden();
+    }
+
+    public function test_artisan_command_cleans_legacy_document_files()
+    {
+        $testInvoiceDir = storage_path('app/documents/invoices');
+        $testReceiptDir = storage_path('app/documents/receipts');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists($testInvoiceDir);
+        \Illuminate\Support\Facades\File::ensureDirectoryExists($testReceiptDir);
+
+        $dummy1 = $testInvoiceDir . '/legacy_test_invoice.xlsx';
+        $dummy2 = $testReceiptDir . '/legacy_test_receipt.pdf';
+        file_put_contents($dummy1, 'test dummy invoice content');
+        file_put_contents($dummy2, 'test dummy receipt content');
+
+        $this->assertFileExists($dummy1);
+        $this->assertFileExists($dummy2);
+
+        $this->artisan('documents:clean-legacy', ['--force' => true])
+            ->expectsOutputToContain('Pembersihan selesai!')
+            ->assertExitCode(0);
+
+        $this->assertFileDoesNotExist($dummy1);
+        $this->assertFileDoesNotExist($dummy2);
     }
 }

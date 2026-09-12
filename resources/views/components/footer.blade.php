@@ -70,16 +70,8 @@
                 </ul>
             </div>
 
-            <!-- Kolom 3: Layanan & Program (2.5 cols) -->
+
             <div class="lg:col-span-2">
-                <h3 class="font-serif text-sm font-bold tracking-wider text-emerald-300 mb-4">Program</h3>
-                <ul class="space-y-2.5 text-xs sm:text-sm">
-                    <li><a href="{{ route('paket') }}" class="text-zinc-300 hover:text-white transition-colors">Umrah Reguler 9 Hari</a></li>
-                    <li><a href="{{ route('paket') }}" class="text-zinc-300 hover:text-white transition-colors">Umrah VIP Ramadhan</a></li>
-                    <li><a href="{{ route('paket') }}" class="text-zinc-300 hover:text-white transition-colors">Haji Khusus / Furoda</a></li>
-                    <li><a href="{{ route('paket') }}" class="text-zinc-300 hover:text-white transition-colors">Umrah Plus Wisata</a></li>
-                    <li><a href="#skema-pendaftaran" class="text-zinc-300 hover:text-white transition-colors">Alur Registrasi</a></li>
-                </ul>
             </div>
 
             <!-- Kolom 4: Izin Resmi Kemenag (4 cols) -->

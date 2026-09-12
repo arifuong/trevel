@@ -4,29 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{{ $title ?? 'PT. Zein Internasional — Penyelenggara Umrah & Haji Khusus Resmi' }}</title>
-    <meta name="description" content="{{ $metaDescription ?? 'Penyelenggara Perjalanan Ibadah Umrah (PPIU) dan Haji Khusus resmi berizin Kemenag RI. Bimbingan ibadah murni sesuai Sunnah dengan kenyamanan terpercaya.' }}">
+    @php
+        $pageTitle = $title ?? 'PT. Zein Internasional — Penyelenggara Umrah & Haji Khusus Resmi';
+        $pageDesc = $metaDescription ?? 'Penyelenggara Perjalanan Ibadah Umrah (PPIU) dan Haji Khusus resmi berizin Kemenag RI. Bimbingan ibadah murni sesuai Sunnah dengan kenyamanan terpercaya.';
+        $pageImage = $ogImage ?? asset('images/hero-1200.webp');
+        $pageType = $ogType ?? 'website';
+    @endphp
+
+    <title>{{ $pageTitle }}</title>
+    <meta name="description" content="{{ $pageDesc }}">
     <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#1B3B2B">
     <link rel="canonical" href="{{ url()->current() }}">
     
-    <!-- Open Graph / Meta -->
-    <meta property="og:title" content="{{ $title ?? 'PT. Zein Internasional — Travel Umrah & Haji Khusus Resmi' }}">
-    <meta property="og:description" content="Penyelenggara Perjalanan Ibadah Umrah dan Haji Khusus resmi berizin Kemenag RI.">
-    <meta property="og:type" content="website">
+    <!-- Open Graph / Facebook / WhatsApp Preview Meta -->
+    <meta property="og:site_name" content="PT. Zein Internasional (Zeintour)">
+    <meta property="og:title" content="{{ $pageTitle }}">
+    <meta property="og:description" content="{{ $pageDesc }}">
+    <meta property="og:type" content="{{ $pageType }}">
     <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ $pageImage }}">
+    <meta property="og:image:alt" content="{{ $pageTitle }}">
+
+    <!-- Twitter Card Meta -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $pageTitle }}">
+    <meta name="twitter:description" content="{{ $pageDesc }}">
+    <meta name="twitter:image" content="{{ $pageImage }}">
 
     <!-- Resource Hints -->
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
     <link rel="dns-prefetch" href="https://images.unsplash.com">
+    <link rel="preconnect" href="https://img.youtube.com">
+    <link rel="dns-prefetch" href="https://img.youtube.com">
 
     <!-- Preload Critical Typography Font -->
     <link rel="preload" href="{{ asset('fonts/playfair-display-700.woff2') }}" as="font" type="font/woff2" crossorigin>
 
-    <!-- Preload Critical LCP Hero Image (Media targeted for Instant LCP) -->
-    <link rel="preload" as="image" href="{{ asset('images/hero-1920.webp') }}" media="(min-width: 1025px)" type="image/webp" fetchpriority="high">
-    <link rel="preload" as="image" href="{{ asset('images/hero-640.webp') }}" media="(min-width: 641px) and (max-width: 1024px)" type="image/webp" fetchpriority="high">
-    <link rel="preload" as="image" href="{{ asset('images/hero-480.webp') }}" media="(max-width: 640px)" type="image/webp" fetchpriority="high">
+    <!-- Preload Critical LCP Hero Image with Responsive Srcset Matching Device DPR -->
+    <link rel="preload" as="image" 
+          href="{{ asset('images/hero-1200.webp') }}" 
+          imagesrcset="{{ asset('images/hero-480.webp') }} 480w, {{ asset('images/hero-640.webp') }} 640w, {{ asset('images/hero-1200.webp') }} 1200w, {{ asset('images/hero-1920.webp') }} 1920w" 
+          imagesizes="100vw" 
+          type="image/webp" 
+          fetchpriority="high">
 
     <!-- Structured Data (JSON-LD) for Rich SEO & Crawlers -->
     <script type="application/ld+json">
@@ -51,23 +72,7 @@
     }
     </script>
 
-    @php
-        $manifestPath = public_path('build/manifest.json');
-        $compiledCssContent = '';
-        if (file_exists($manifestPath)) {
-            $manifest = json_decode(file_get_contents($manifestPath), true) ?: [];
-            $cssEntry = $manifest['resources/css/app.css']['file'] ?? null;
-            if ($cssEntry && file_exists(public_path('build/' . $cssEntry))) {
-                $compiledCssContent = file_get_contents(public_path('build/' . $cssEntry));
-            }
-        }
-    @endphp
-
-    @if(!empty($compiledCssContent))
-        <style>{!! $compiledCssContent !!}</style>
-    @else
-        @vite(['resources/css/app.css'])
-    @endif
+    @vite(['resources/css/app.css'])
     @stack('styles')
 </head>
 <body class="font-sans antialiased text-[#526057] bg-white flex flex-col min-h-screen selection:bg-[#1B3B2B] selection:text-white" x-data="{ mobileMenuOpen: false }">
@@ -94,6 +99,9 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
         </svg>
     </button>
+
+    <!-- Toast Notification Container -->
+    <x-toast-notification />
 
     @vite(['resources/js/app.js'])
     @stack('scripts')

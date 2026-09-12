@@ -21,7 +21,7 @@
         }
     @endphp
 
-    @if(!empty($compiledCssContent))
+    @if(!empty($compiledCssContent) && !app()->runningUnitTests())
         <style>{!! $compiledCssContent !!}</style>
     @else
         @vite(['resources/css/app.css'])
@@ -52,6 +52,86 @@
 </head>
 <body class="font-sans antialiased bg-[#F8FAF7] text-[#526057] min-h-screen flex flex-col selection:bg-[#1B3B2B] selection:text-white">
 
+    @php
+        $adminNavItems = [
+            [
+                'name' => 'Beranda',
+                'route' => 'admin.dashboard',
+                'pattern' => 'admin.dashboard',
+                'desc' => 'Ringkasan & statistik utama sistem',
+                'icon_svg' => 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z',
+                'is_bottom_tab' => true,
+                'tab_label' => 'Beranda',
+            ],
+            [
+                'name' => 'Manajemen Jamaah',
+                'route' => 'admin.users.index',
+                'pattern' => 'admin.users.*',
+                'desc' => 'Kelola dan pantau seluruh data jamaah terdaftar',
+                'icon_svg' => 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z',
+                'is_bottom_tab' => false,
+            ],
+            [
+                'name' => 'Paket Umrah',
+                'route' => 'admin.packages.index',
+                'pattern' => 'admin.packages.*',
+                'desc' => 'Kelola katalog paket perjalanan umrah & haji',
+                'icon_svg' => 'M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9',
+                'is_bottom_tab' => true,
+                'tab_label' => 'Paket',
+            ],
+            [
+                'name' => 'Master Hotel',
+                'route' => 'admin.hotels.index',
+                'pattern' => 'admin.hotels.*',
+                'desc' => 'Kelola hotel Makkah & Madinah reusable',
+                'icon_svg' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+                'is_bottom_tab' => false,
+            ],
+            [
+                'name' => 'Master Maskapai',
+                'route' => 'admin.airlines.index',
+                'pattern' => 'admin.airlines.*',
+                'desc' => 'Kelola maskapai penerbangan & logo',
+                'icon_svg' => 'M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5',
+                'is_bottom_tab' => false,
+            ],
+            [
+                'name' => 'Verifikasi Dokumen',
+                'route' => 'admin.registrations.index',
+                'pattern' => 'admin.registrations.*',
+                'desc' => 'Verifikasi paspor, KTP, dan kelengkapan jamaah',
+                'icon_svg' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+                'is_bottom_tab' => true,
+                'tab_label' => 'Dokumen',
+            ],
+            [
+                'name' => 'Verifikasi Pembayaran',
+                'route' => 'admin.payments.index',
+                'pattern' => 'admin.payments.*',
+                'desc' => 'Cek dan validasi setoran DP & cicilan pelunasan',
+                'icon_svg' => 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z',
+                'is_bottom_tab' => false,
+            ],
+            [
+                'name' => 'Validasi Pembatalan',
+                'route' => 'admin.cancellations.index',
+                'pattern' => 'admin.cancellations.*',
+                'desc' => 'Tinjau pengajuan pembatalan & hitung refund',
+                'icon_svg' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z',
+                'is_bottom_tab' => false,
+            ],
+            [
+                'name' => 'Galeri Media',
+                'route' => 'admin.galleries.index',
+                'pattern' => 'admin.galleries.*',
+                'desc' => 'Kelola foto dokumentasi & video kegiatan jamaah',
+                'icon_svg' => 'M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z',
+                'is_bottom_tab' => false,
+            ],
+        ];
+    @endphp
+
     {{-- ═══════════════════════════════════════════════════════════════
          DESKTOP & TABLET SIDEBAR (NAVIGASI KIRI)
          ═══════════════════════════════════════════════════════════════ --}}
@@ -71,71 +151,24 @@
             </a>
         </div>
 
-        {{-- Menu Navigasi --}}
+        {{-- Menu Navigasi (Single Source of Truth) --}}
         <div class="flex-grow py-6 px-4 space-y-1 overflow-y-auto">
             <div class="text-[10px] font-bold uppercase tracking-wider text-white/40 px-3 mb-2">
                 Menu Utama
             </div>
 
-            {{-- 1. Beranda --}}
-            <a href="{{ route('admin.dashboard') }}" 
-               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.dashboard') ? 'bg-[#1B3B2B] text-white shadow-xs border border-emerald-500/30' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
-                <svg class="w-4 h-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
-                </svg>
-                <span>Beranda</span>
-            </a>
-
-            {{-- 2. Manajemen Jamaah --}}
-            <a href="{{ route('admin.users.index') }}" 
-               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.users.*') ? 'bg-[#1B3B2B] text-white shadow-xs border border-emerald-500/30' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
-                <svg class="w-4 h-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
-                </svg>
-                <span>Manajemen Jamaah</span>
-            </a>
-
-            {{-- 3. Paket Umrah --}}
-            <a href="{{ route('admin.packages.index') }}" 
-               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.packages.*') ? 'bg-[#1B3B2B] text-white shadow-xs border border-emerald-500/30' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
-                <svg class="w-4 h-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/>
-                </svg>
-                <span>Paket Umrah</span>
-            </a>
-
-            {{-- 3. Verifikasi Dokumen & Pendaftaran --}}
-            <a href="{{ route('admin.registrations.index') }}" 
-               class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.registrations.*') ? 'bg-[#1B3B2B] text-white shadow-xs border border-emerald-500/30' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
-                <div class="flex items-center gap-3">
-                    <svg class="w-4 h-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+            @foreach($adminNavItems as $nav)
+                @php
+                    $isActive = request()->routeIs($nav['pattern']);
+                @endphp
+                <a href="{{ route($nav['route']) }}" 
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all {{ $isActive ? 'bg-[#1B3B2B] text-white shadow-xs border border-emerald-500/30' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
+                    <svg class="w-4 h-4 text-emerald-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ $nav['icon_svg'] }}"/>
                     </svg>
-                    <span>Verifikasi Dokumen</span>
-                </div>
-            </a>
-
-            {{-- 4. Verifikasi Pembayaran --}}
-            <a href="{{ route('admin.payments.index') }}" 
-               class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.payments.*') ? 'bg-[#1B3B2B] text-white shadow-xs border border-emerald-500/30' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
-                <div class="flex items-center gap-3">
-                    <svg class="w-4 h-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/>
-                    </svg>
-                    <span>Verifikasi Pembayaran</span>
-                </div>
-            </a>
-
-            {{-- 5. Validasi Pembatalan --}}
-            <a href="{{ route('admin.cancellations.index') }}" 
-               class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.cancellations.*') ? 'bg-[#1B3B2B] text-white shadow-xs border border-emerald-500/30' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
-                <div class="flex items-center gap-3">
-                    <svg class="w-4 h-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
-                    </svg>
-                    <span>Validasi Pembatalan</span>
-                </div>
-            </a>
+                    <span class="truncate">{{ $nav['name'] }}</span>
+                </a>
+            @endforeach
         </div>
 
         {{-- Sidebar Bagian Bawah --}}
@@ -178,19 +211,29 @@
     <div class="lg:pl-64 flex flex-col flex-grow min-h-screen">
 
         {{-- Header Atas Layar Mobile --}}
-        <header class="lg:hidden bg-[#122B1F] text-white sticky top-0 z-30 px-4 h-14 flex items-center justify-between shadow-sm border-b border-white/10">
-            <div class="flex items-center gap-2.5">
+        <header class="lg:hidden bg-[#122B1F] text-white sticky top-0 z-30 px-3.5 sm:px-4 h-14 flex items-center justify-between shadow-sm border-b border-white/10">
+            <div class="flex items-center gap-2 min-w-0">
                 <img src="{{ asset('images/logo-zein.webp') }}" 
                      alt="Logo Zein Tour" 
-                     class="h-7 w-auto brightness-0 invert object-contain" 
+                     class="h-7 w-auto brightness-0 invert object-contain shrink-0" 
                      width="90" 
                      height="28">
-                <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-400 bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
+                <span class="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-emerald-400 bg-white/10 px-1.5 py-0.5 rounded border border-white/10 shrink-0">
                     Admin
                 </span>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                {{-- Info User Mobile --}}
+                <div class="flex items-center gap-1.5 bg-white/10 rounded-full py-1 pl-1.5 pr-2.5 border border-white/10">
+                    <div class="w-5 h-5 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px] font-bold flex items-center justify-center shrink-0">
+                        {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
+                    </div>
+                    <span class="text-[11px] font-semibold text-white max-w-[65px] sm:max-w-[100px] truncate">
+                        {{ explode(' ', auth()->user()->name ?? 'Admin')[0] }}
+                    </span>
+                </div>
+
                 <a href="{{ route('home') }}" target="_blank" 
                    class="p-2 text-white/70 hover:text-white rounded-lg transition-colors"
                    title="Lihat Website">
@@ -252,10 +295,13 @@
          NAVIGASI BAWAH LAYAR MOBILE (ADMIN)
          ═══════════════════════════════════════════════════════════════ --}}
     @php
-        $isAdminHome = request()->routeIs('admin.dashboard');
-        $isAdminPaket = request()->routeIs('admin.packages.*');
-        $isAdminReg = request()->routeIs('admin.registrations.*');
-        $isOtherActive = request()->routeIs('admin.users.*', 'admin.payments.*', 'admin.cancellations.*');
+        $isOtherActive = false;
+        foreach ($adminNavItems as $nav) {
+            if (empty($nav['is_bottom_tab']) && request()->routeIs($nav['pattern'])) {
+                $isOtherActive = true;
+                break;
+            }
+        }
     @endphp
 
     <div x-data="{ showMoreMenu: false }" class="lg:hidden">
@@ -304,126 +350,62 @@
                 </button>
             </div>
 
-            {{-- List Menu Fitur Lainnya --}}
-            <div class="p-4 space-y-2 overflow-y-auto max-h-[60vh]">
-                
-                {{-- 1. Manajemen Jamaah --}}
-                @php $isUserActive = request()->routeIs('admin.users.*'); @endphp
-                <a href="{{ route('admin.users.index') }}" 
-                   @click="showMoreMenu = false"
-                   class="flex items-center gap-3.5 p-3 rounded-2xl transition-all {{ $isUserActive ? 'bg-[#EFF3EB] text-[#1B3B2B] font-bold border border-[#CCD8C7]' : 'text-[#12271E] hover:bg-[#F8FAF7]' }}">
-                    <div class="w-10 h-10 rounded-xl {{ $isUserActive ? 'bg-[#1B3B2B] text-white' : 'bg-[#EFF3EB] text-[#1B3B2B]' }} flex items-center justify-center shrink-0 shadow-2xs">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
-                        </svg>
-                    </div>
-                    <div class="flex-grow">
-                        <div class="text-xs font-bold leading-tight">Manajemen Jamaah</div>
-                        <div class="text-[11px] text-[#526057] font-normal mt-0.5">Kelola dan pantau seluruh data jamaah terdaftar</div>
-                    </div>
-                    @if($isUserActive)
-                        <span class="w-2 h-2 rounded-full bg-[#1B3B2B] shrink-0"></span>
+            {{-- List Menu Fitur Lainnya (Single Source of Truth) --}}
+            <div id="admin-mobile-drawer-menu" class="p-4 space-y-2 overflow-y-auto max-h-[60vh]">
+                @foreach($adminNavItems as $nav)
+                    @if(empty($nav['is_bottom_tab']))
+                        @php
+                            $isItemActive = request()->routeIs($nav['pattern']);
+                        @endphp
+                        <a href="{{ route($nav['route']) }}" 
+                           @click="showMoreMenu = false"
+                           class="flex items-center gap-3.5 p-3 rounded-2xl transition-all {{ $isItemActive ? 'bg-[#EFF3EB] text-[#1B3B2B] font-bold border border-[#CCD8C7]' : 'text-[#12271E] hover:bg-[#F8FAF7]' }}">
+                            <div class="w-10 h-10 rounded-xl {{ $isItemActive ? 'bg-[#1B3B2B] text-white' : 'bg-[#EFF3EB] text-[#1B3B2B]' }} flex items-center justify-center shrink-0 shadow-2xs">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $nav['icon_svg'] }}"/>
+                                </svg>
+                            </div>
+                            <div class="flex-grow">
+                                <div class="text-xs font-bold leading-tight">{{ $nav['name'] }}</div>
+                                <div class="text-[11px] text-[#526057] font-normal mt-0.5">{{ $nav['desc'] }}</div>
+                            </div>
+                            @if($isItemActive)
+                                <span class="w-2 h-2 rounded-full bg-[#1B3B2B] shrink-0"></span>
+                            @endif
+                        </a>
                     @endif
-                </a>
-
-                {{-- 2. Verifikasi Pembayaran --}}
-                @php $isPayActive = request()->routeIs('admin.payments.*'); @endphp
-                <a href="{{ route('admin.payments.index') }}" 
-                   @click="showMoreMenu = false"
-                   class="flex items-center gap-3.5 p-3 rounded-2xl transition-all {{ $isPayActive ? 'bg-[#EFF3EB] text-[#1B3B2B] font-bold border border-[#CCD8C7]' : 'text-[#12271E] hover:bg-[#F8FAF7]' }}">
-                    <div class="w-10 h-10 rounded-xl {{ $isPayActive ? 'bg-[#1B3B2B] text-white' : 'bg-[#EFF3EB] text-[#1B3B2B]' }} flex items-center justify-center shrink-0 shadow-2xs">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/>
-                        </svg>
-                    </div>
-                    <div class="flex-grow">
-                        <div class="text-xs font-bold leading-tight">Verifikasi Pembayaran</div>
-                        <div class="text-[11px] text-[#526057] font-normal mt-0.5">Cek dan validasi setoran DP & cicilan pelunasan</div>
-                    </div>
-                    @if($isPayActive)
-                        <span class="w-2 h-2 rounded-full bg-[#1B3B2B] shrink-0"></span>
-                    @endif
-                </a>
-
-                {{-- 3. Validasi Pembatalan --}}
-                @php $isCancelActive = request()->routeIs('admin.cancellations.*'); @endphp
-                <a href="{{ route('admin.cancellations.index') }}" 
-                   @click="showMoreMenu = false"
-                   class="flex items-center gap-3.5 p-3 rounded-2xl transition-all {{ $isCancelActive ? 'bg-[#EFF3EB] text-[#1B3B2B] font-bold border border-[#CCD8C7]' : 'text-[#12271E] hover:bg-[#F8FAF7]' }}">
-                    <div class="w-10 h-10 rounded-xl {{ $isCancelActive ? 'bg-[#1B3B2B] text-white' : 'bg-[#EFF3EB] text-[#1B3B2B]' }} flex items-center justify-center shrink-0 shadow-2xs">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
-                        </svg>
-                    </div>
-                    <div class="flex-grow">
-                        <div class="text-xs font-bold leading-tight">Validasi Pembatalan</div>
-                        <div class="text-[11px] text-[#526057] font-normal mt-0.5">Tinjau pengajuan pembatalan & hitung refund</div>
-                    </div>
-                    @if($isCancelActive)
-                        <span class="w-2 h-2 rounded-full bg-[#1B3B2B] shrink-0"></span>
-                    @endif
-                </a>
-
+                @endforeach
             </div>
 
         </div>
 
-        {{-- Bar Navigasi Bawah Mobile (4 Tab Utama: Beranda, Paket, Dokumen, Fitur Lainnya) --}}
+        {{-- Bar Navigasi Bawah Mobile (4 Tab: 3 Tab Utama + Fitur Lainnya) --}}
         <nav class="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-lg border-t border-[#E0E7DC] shadow-[0_-8px_20px_rgba(18,43,31,0.08)]"
              style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));">
             
             <div class="grid grid-cols-4 items-center h-16 px-1 max-w-md mx-auto relative">
-                
-                {{-- 1. Beranda --}}
-                <a href="{{ route('admin.dashboard') }}" 
-                   class="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-center transition-all group {{ $isAdminHome ? 'text-[#1B3B2B]' : 'text-[#526057] hover:text-[#1B3B2B]' }}"
-                   aria-label="Beranda Admin">
-                    <div class="relative p-1 rounded-xl transition-transform duration-200 {{ $isAdminHome ? 'scale-110' : 'group-active:scale-95' }}">
-                        <svg class="w-5 h-5 {{ $isAdminHome ? 'stroke-[2.5]' : 'stroke-2' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
-                        </svg>
-                        @if($isAdminHome)
-                            <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#1B3B2B] rounded-full"></span>
-                        @endif
-                    </div>
-                    <span class="text-[10px] tracking-tight mt-0.5 {{ $isAdminHome ? 'font-bold text-[#1B3B2B]' : 'font-medium text-[#526057]' }}">
-                        Beranda
-                    </span>
-                </a>
-
-                {{-- 2. Paket --}}
-                <a href="{{ route('admin.packages.index') }}" 
-                   class="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-center transition-all group {{ $isAdminPaket ? 'text-[#1B3B2B]' : 'text-[#526057] hover:text-[#1B3B2B]' }}"
-                   aria-label="Kelola Paket Umrah">
-                    <div class="relative p-1 rounded-xl transition-transform duration-200 {{ $isAdminPaket ? 'scale-110' : 'group-active:scale-95' }}">
-                        <svg class="w-5 h-5 {{ $isAdminPaket ? 'stroke-[2.5]' : 'stroke-2' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/>
-                        </svg>
-                        @if($isAdminPaket)
-                            <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#1B3B2B] rounded-full"></span>
-                        @endif
-                    </div>
-                    <span class="text-[10px] tracking-tight mt-0.5 {{ $isAdminPaket ? 'font-bold text-[#1B3B2B]' : 'font-medium text-[#526057]' }}">
-                        Paket
-                    </span>
-                </a>
-
-                {{-- 3. Dokumen --}}
-                <a href="{{ route('admin.registrations.index') }}" 
-                   class="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-center transition-all group {{ $isAdminReg ? 'text-[#1B3B2B]' : 'text-[#526057] hover:text-[#1B3B2B]' }}"
-                   aria-label="Verifikasi Dokumen">
-                    <div class="relative p-1 rounded-xl transition-transform duration-200 {{ $isAdminReg ? 'scale-110' : 'group-active:scale-95' }}">
-                        <svg class="w-5 h-5 {{ $isAdminReg ? 'stroke-[2.5]' : 'stroke-2' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
-                        </svg>
-                        @if($isAdminReg)
-                            <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#1B3B2B] rounded-full"></span>
-                        @endif
-                    </div>
-                    <span class="text-[10px] tracking-tight mt-0.5 {{ $isAdminReg ? 'font-bold text-[#1B3B2B]' : 'font-medium text-[#526057]' }}">
-                        Dokumen
-                    </span>
-                </a>
+                @foreach($adminNavItems as $nav)
+                    @if(!empty($nav['is_bottom_tab']))
+                        @php
+                            $isTabActive = request()->routeIs($nav['pattern']);
+                        @endphp
+                        <a href="{{ route($nav['route']) }}" 
+                           class="flex flex-col items-center justify-center h-full min-h-[44px] py-1 text-center transition-all group {{ $isTabActive ? 'text-[#1B3B2B]' : 'text-[#526057] hover:text-[#1B3B2B]' }}"
+                           aria-label="{{ $nav['tab_label'] ?? $nav['name'] }}">
+                            <div class="relative p-1 rounded-xl transition-transform duration-200 {{ $isTabActive ? 'scale-110' : 'group-active:scale-95' }}">
+                                <svg class="w-5 h-5 {{ $isTabActive ? 'stroke-[2.5]' : 'stroke-2' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $nav['icon_svg'] }}"/>
+                                </svg>
+                                @if($isTabActive)
+                                    <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#1B3B2B] rounded-full"></span>
+                                @endif
+                            </div>
+                            <span class="text-[10px] tracking-tight mt-0.5 {{ $isTabActive ? 'font-bold text-[#1B3B2B]' : 'font-medium text-[#526057]' }}">
+                                {{ $nav['tab_label'] ?? $nav['name'] }}
+                            </span>
+                        </a>
+                    @endif
+                @endforeach
 
                 {{-- 4. Fitur Lainnya (Drawer Toggle) --}}
                 <button type="button" 
@@ -447,6 +429,9 @@
         </nav>
 
     </div>
+
+    {{-- Toast Notification System (Global for all admin actions & flash messages) --}}
+    <x-toast-notification />
 
     @vite(['resources/js/app.js'])
     @stack('scripts')

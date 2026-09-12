@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Contracts\WhatsAppNotificationInterface;
+use App\Services\DummyWhatsAppNotification;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,10 +13,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(
-            \App\Services\WhatsappOtpInterface::class,
-            \App\Services\DummyWhatsappOtp::class
-        );
+        require_once app_path('Helpers/helpers.php');
+
+        $this->app->bind(WhatsAppNotificationInterface::class, DummyWhatsAppNotification::class);
     }
 
     /**

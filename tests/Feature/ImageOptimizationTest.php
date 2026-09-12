@@ -36,13 +36,11 @@ class ImageOptimizationTest extends TestCase
         $this->jamaah = User::factory()->create([
             'role' => 'jamaah',
             'phone' => '6281234567890',
-            'phone_verified_at' => now(),
         ]);
 
         $this->admin = User::factory()->create([
             'role' => 'admin',
             'phone' => '6282121483337',
-            'phone_verified_at' => now(),
         ]);
 
         $this->package = Package::create([

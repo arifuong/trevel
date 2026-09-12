@@ -1,7 +1,7 @@
 <x-layouts.main :title="'Legalitas & Izin Resmi — PT. ZEIN INTERNASIONAL (ZEIN TOUR)'" :company="$company">
 
     {{-- ═══════════════════════════════════════════════════════════════
-         1. HEADER HALAMAN (bg-white)
+         1. HEADER HALAMAN & IDENTITAS PERUSAHAAN (bg-white)
     ═══════════════════════════════════════════════════════════════ --}}
     <div class="bg-white border-b border-[#E0E7DC] pt-8 pb-14 sm:pb-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -20,7 +20,7 @@
             </div>
 
             <!-- Ringkasan Identitas Perusahaan -->
-            <div data-reveal class="mt-8 bg-[#EFF3EB] rounded-3xl p-6 sm:p-8 border border-[#E0E7DC]">
+            <div data-reveal class="mt-8 bg-[#EFF3EB] rounded-3xl p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 text-xs">
                     <div>
                         <span class="text-[10px] uppercase font-bold text-[#4D5E54] block mb-0.5">Nama Perusahaan</span>
@@ -48,9 +48,9 @@
     </div>
 
     {{-- ═══════════════════════════════════════════════════════════════
-         2. DAFTAR DOKUMEN LEGALITAS RESMI (bg-[#EFF3EB])
+         2. DAFTAR DOKUMEN LEGALITAS RESMI (bg-white)
     ═══════════════════════════════════════════════════════════════ --}}
-    <section class="py-20 sm:py-28 bg-[#EFF3EB] border-b border-[#E0E7DC]">
+    <section class="py-20 sm:py-28 bg-white border-b border-[#E0E7DC]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
             <div data-reveal class="text-center max-w-2xl mx-auto mb-14">
@@ -67,7 +67,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach($legalities as $legality)
-                    <div data-reveal-child class="bg-white rounded-3xl p-6 sm:p-7 border border-[#E0E7DC] flex flex-col justify-between shadow-xs">
+                    <div data-reveal-child class="bg-white rounded-3xl p-6 sm:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 flex flex-col justify-between">
                         <div>
                             <div class="flex items-center justify-between mb-4">
                                 <span class="text-[10px] uppercase font-bold text-[#1B3B2B] bg-[#EAF1E8] px-2.5 py-1 rounded-md">
@@ -79,7 +79,7 @@
                             <p class="text-xs font-mono font-bold text-[#1B3B2B] mb-3">{{ $legality['number'] }}</p>
                             <p class="text-xs text-[#526057] leading-relaxed">{{ $legality['description'] }}</p>
                         </div>
-                        <div class="pt-4 mt-4 border-t border-[#E0E7DC] flex items-center justify-between text-xs text-[#4D5E54]">
+                        <div class="pt-4 mt-4 border-t border-[#E8EDE5] flex items-center justify-between text-xs text-[#4D5E54]">
                             <span>Status:</span>
                             <span class="text-[#1B3B2B] font-bold">Aktif & Terverifikasi</span>
                         </div>
@@ -138,7 +138,7 @@
                 @endphp
 
                 @foreach($pastiList as $pasti)
-                    <div data-reveal-child class="bg-[#EFF3EB] rounded-2xl p-6 border border-[#E0E7DC] flex items-start gap-5 shadow-xs">
+                    <div data-reveal-child class="bg-[#EFF3EB] rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-300 flex items-start gap-5">
                         <span class="font-serif text-3xl sm:text-4xl font-extrabold text-[#1B3B2B]/30 tracking-tighter leading-none shrink-0 pt-0.5" aria-hidden="true">
                             {{ $pasti['num'] }}
                         </span>

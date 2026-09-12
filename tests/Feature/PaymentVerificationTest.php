@@ -8,7 +8,7 @@ use App\Models\Payment;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
 use App\Models\User;
-use App\Services\WhatsappOtpInterface;
+use App\Contracts\WhatsAppNotificationInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -32,10 +32,10 @@ class PaymentVerificationTest extends TestCase
 
         Storage::fake('public');
 
-        // Mock WhatsApp OTP
-        $mockWhatsapp = $this->createMock(WhatsappOtpInterface::class);
+        // Mock WhatsApp Notification
+        $mockWhatsapp = $this->createMock(WhatsAppNotificationInterface::class);
         $mockWhatsapp->method('sendMessage')->willReturn(true);
-        $this->app->instance(WhatsappOtpInterface::class, $mockWhatsapp);
+        $this->app->instance(WhatsAppNotificationInterface::class, $mockWhatsapp);
 
         // 1. Admin
         $this->admin = User::factory()->create([
@@ -43,7 +43,6 @@ class PaymentVerificationTest extends TestCase
             'email' => 'finance@zeintour.com',
             'role' => 'admin',
             'password' => Hash::make('password123'),
-            'phone_verified_at' => now(),
         ]);
 
         // 2. Jamaah 1
@@ -53,7 +52,6 @@ class PaymentVerificationTest extends TestCase
             'phone' => '6281111111111',
             'role' => 'jamaah',
             'password' => Hash::make('password123'),
-            'phone_verified_at' => now(),
         ]);
 
         // 3. Jamaah 2
@@ -63,7 +61,6 @@ class PaymentVerificationTest extends TestCase
             'phone' => '6282222222222',
             'role' => 'jamaah',
             'password' => Hash::make('password123'),
-            'phone_verified_at' => now(),
         ]);
 
         // 4. Package

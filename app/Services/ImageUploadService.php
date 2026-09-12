@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\Encoders\JpegEncoder;
+use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 
 class ImageUploadService
@@ -52,6 +53,13 @@ class ImageUploadService
      */
     public const PHOTO_MAX_DIMENSION = 1800;
     public const PHOTO_JPEG_QUALITY = 78;
+
+    /**
+     * Konfigurasi Foto Publik (Paket wisata, Galeri, Hero).
+     * Maksimal dimensi 1200px, kualitas JPEG & WebP 82%.
+     */
+    public const PUBLIC_PHOTO_MAX_DIMENSION = 1200;
+    public const PUBLIC_PHOTO_QUALITY = 82;
 
     public function __construct()
     {
@@ -131,20 +139,38 @@ class ImageUploadService
     }
 
     /**
+     * Upload & kompres foto publik (Paket wisata, Galeri, Hero).
+     *
+     * @param UploadedFile|string $file
+     * @param string $directory Subfolder di storage/app/public/ (misal: 'packages/photos', 'galleries')
+     * @return string Path relatif untuk disimpan di database
+     */
+    public function uploadPublicPhoto(UploadedFile|string $file, string $directory): string
+    {
+        return $this->processAndStore(
+            file: $file,
+            directory: $directory,
+            maxDimension: self::PUBLIC_PHOTO_MAX_DIMENSION,
+            quality: self::PUBLIC_PHOTO_QUALITY
+        );
+    }
+
+    /**
      * Ganti file lama dengan file baru secara aman.
      * Upload & kompres file baru terlebih dahulu, baru kemudian menghapus file lama dari storage.
      *
      * @param string|null $oldPath Path relatif file lama di database
      * @param UploadedFile|string $newFile File baru yang diunggah
      * @param string $directory Folder tujuan
-     * @param string $type 'document' atau 'photo'
+     * @param string $type 'document', 'photo', atau 'public_photo'
      * @return string Path relatif file baru
      */
     public function replaceFile(?string $oldPath, UploadedFile|string $newFile, string $directory, string $type = 'document'): string
     {
         $newPath = match ($type) {
-            'photo' => $this->uploadPhoto($newFile, $directory),
-            default => $this->uploadDocument($newFile, $directory),
+            'photo'        => $this->uploadPhoto($newFile, $directory),
+            'public_photo' => $this->uploadPublicPhoto($newFile, $directory),
+            default        => $this->uploadDocument($newFile, $directory),
         };
 
         // Hapus file lama hanya setelah file baru berhasil dikompres dan disimpan
@@ -156,7 +182,7 @@ class ImageUploadService
     }
 
     /**
-     * Hapus file fisik dari local storage (disk public).
+     * Hapus file fisik dari local storage (disk public), termasuk versi WebP jika ada.
      */
     public function deleteFile(?string $path): bool
     {
@@ -165,9 +191,24 @@ class ImageUploadService
         }
 
         try {
+            $deleted = false;
             if (Storage::disk('public')->exists($path)) {
-                return Storage::disk('public')->delete($path);
+                $deleted = Storage::disk('public')->delete($path);
             }
+
+            // Hapus juga file WebP pendamping jika ada
+            $webpPath = preg_replace('/\.(jpe?g|png)$/i', '.webp', $path);
+            if ($webpPath !== $path && Storage::disk('public')->exists($webpPath)) {
+                Storage::disk('public')->delete($webpPath);
+            }
+
+            // Hapus juga file cache on-demand WebP jika ada
+            $cacheWebpPath = 'cache/webp/' . ltrim($path, '/') . '.webp';
+            if (Storage::disk('public')->exists($cacheWebpPath)) {
+                Storage::disk('public')->delete($cacheWebpPath);
+            }
+
+            return $deleted;
         } catch (\Throwable $e) {
             Log::error("[ImageUploadService] Gagal menghapus file fisik: {$path}. Error: " . $e->getMessage());
         }
@@ -180,7 +221,8 @@ class ImageUploadService
      * 1. Decode stream/file
      * 2. Resize proporsional (scaleDown - tidak upscale gambar kecil)
      * 3. Kompresi JPEG dengan kualitas terstandarisasi
-     * 4. Simpan langsung ke Laravel Local Storage (disk 'public') dengan nama UUID unik
+     * 4. Simpan 1 file asli ke Local Storage disk public (storage/app/public/...) dengan nama UUID unik
+     * (Konversi WebP dilakukan secara on-demand & di-cache saat diakses oleh browser via rute /img/{path})
      * 5. Bersihkan memori dan return relative path untuk database.
      */
     protected function processAndStore(
@@ -204,15 +246,17 @@ class ImageUploadService
             $image->scaleDown(width: $maxDimension, height: $maxDimension);
 
             // 3. Kompresi ke format JPEG
-            $encoded = $image->encode(new JpegEncoder(quality: $quality));
-            $binary = (string) $encoded;
+            $encodedJpeg = $image->encode(new JpegEncoder(quality: $quality));
+            $binaryJpeg = (string) $encodedJpeg;
 
             // 4. Buat nama file unik berbasis UUID
-            $filename = Str::uuid()->toString() . '.jpg';
-            $relativePath = trim($directory, '/') . '/' . $filename;
+            $uuid = Str::uuid()->toString();
+            $filename = $uuid . '.jpg';
+            $cleanDir = trim($directory, '/');
+            $relativePath = $cleanDir . '/' . $filename;
 
-            // 5. Simpan langsung ke Local Storage disk public (storage/app/public/...)
-            Storage::disk('public')->put($relativePath, $binary);
+            // 5. Simpan HANYA 1 file asli ke disk public (tanpa duplikasi format eager WebP)
+            Storage::disk('public')->put($relativePath, $binaryJpeg);
 
             return $relativePath;
         } catch (\Throwable $e) {

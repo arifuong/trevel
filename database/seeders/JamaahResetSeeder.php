@@ -51,7 +51,6 @@ class JamaahResetSeeder extends Seeder
                 'password' => Hash::make('Jamaah123!'),
                 'role' => 'jamaah',
                 'email_verified_at' => now(),
-                'phone_verified_at' => now(),
             ]);
         });
     }

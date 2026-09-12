@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 class LoginController extends Controller
 {
     /**
-     * Tampilkan form login jamaah.
+     * Tampilkan form login jamaah (Email & Password).
      */
     public function showForm()
     {
@@ -19,8 +19,7 @@ class LoginController extends Controller
     }
 
     /**
-     * Proses login jamaah.
-     * PRD Section 6.1: Hanya bisa login setelah OTP terverifikasi.
+     * Proses login jamaah via email & password.
      */
     public function login(LoginRequest $request)
     {
@@ -33,7 +32,7 @@ class LoginController extends Controller
                 ->withErrors(['email' => 'Akun dengan email ini belum terdaftar.']);
         }
 
-        // 2. Verifikasi kredensial
+        // 2. Verifikasi kredensial password
         if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
             return back()
                 ->withInput($request->only('email'))
@@ -47,17 +46,10 @@ class LoginController extends Controller
             Auth::logout();
             return back()
                 ->withInput($request->only('email'))
-                ->withErrors(['email' => 'Akun ini bukan akun jamaah.']);
+                ->withErrors(['email' => 'Akun ini bukan akun jamaah. Silakan masuk melalui portal Admin.']);
         }
 
-        // 4. Cek apakah OTP sudah terverifikasi
-        if (!$user->phone_verified_at) {
-            Auth::logout();
-            session(['otp_user_id' => $user->id]);
-            return redirect()->route('otp.verify')
-                ->with('warning', 'Akun Anda belum diverifikasi. Silakan masukkan kode OTP WhatsApp Anda.');
-        }
-
+        // 4. Regenerate session dan arahkan ke dashboard
         $request->session()->regenerate();
 
         return redirect()->intended(route('jamaah.dashboard'))

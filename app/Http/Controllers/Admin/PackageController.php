@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Package;
 use App\Models\Registration;
 use App\Http\Controllers\Controller;
+use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -13,6 +14,10 @@ use Illuminate\Support\Facades\Storage;
 
 class PackageController extends Controller
 {
+    public function __construct(
+        protected ImageUploadService $imageUploadService
+    ) {}
+
     public function index(Request $request)
     {
         // Search by name, filter by status
@@ -55,7 +60,13 @@ class PackageController extends Controller
             'duration' => ['required', 'integer', 'min:1'],
             'description' => ['nullable', 'string'],
             'status' => ['required', 'in:aktif,nonaktif'],
+            'package_type' => ['required', 'in:umrah,haji'],
+            'category_label' => ['nullable', 'string', 'max:100'],
             'main_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'includes' => ['nullable', 'array'],
+            'includes.*' => ['required', 'string', 'max:255'],
+            'excludes' => ['nullable', 'array'],
+            'excludes.*' => ['required', 'string', 'max:255'],
         ], [
             'main_photo.image' => 'Foto utama harus berupa file gambar.',
             'main_photo.mimes' => 'Format file tidak didukung. Silakan upload JPG, JPEG, PNG, atau WEBP.',
@@ -78,10 +89,30 @@ class PackageController extends Controller
 
         // Handle main photo upload
         if ($request->hasFile('main_photo')) {
-            $validated['main_photo'] = $request->file('main_photo')->store('packages/photos', 'public');
+            $validated['main_photo'] = $this->imageUploadService->uploadPublicPhoto($request->file('main_photo'), 'packages/photos');
         }
 
         $package = Package::create($validated);
+
+        // Save includes at package level
+        if ($request->filled('includes')) {
+            $sortOrder = 0;
+            foreach ($request->input('includes', []) as $item) {
+                if (trim($item)) {
+                    $package->includes()->create(['item' => trim($item), 'sort_order' => $sortOrder++]);
+                }
+            }
+        }
+
+        // Save excludes at package level
+        if ($request->filled('excludes')) {
+            $sortOrder = 0;
+            foreach ($request->input('excludes', []) as $item) {
+                if (trim($item)) {
+                    $package->excludes()->create(['item' => trim($item), 'sort_order' => $sortOrder++]);
+                }
+            }
+        }
 
         return redirect()->route('admin.packages.show', $package)
             ->with('success', 'Paket berhasil dibuat. Tambahkan sub-paket (VIP/Bisnis/Ekonomi) untuk melengkapi.');
@@ -90,19 +121,30 @@ class PackageController extends Controller
     public function show(Package $package)
     {
         $package->load([
+            'includes',
+            'excludes',
             'variants' => function($q) {
                 $q->orderBy('sort_order')->with([
                     'prices' => fn($q2) => $q2->orderBy('sort_order'),
-                    'hotelPhotos' => fn($q4) => $q4->orderBy('sort_order'),
+                    'airlines',
+                    'hotelMakkah',
+                    'hotelMadinah',
                 ]);
+            },
+            'registrations' => function($q) {
+                $q->with(['user', 'members'])->latest();
             }
         ]);
 
-        return view('admin.packages.show', compact('package'));
+        $readyToDepartCount = $package->registrations->where('status', Registration::STATUS_BERANGKAT)->count();
+        $completedCount = $package->registrations->where('status', Registration::STATUS_SELESAI)->count();
+
+        return view('admin.packages.show', compact('package', 'readyToDepartCount', 'completedCount'));
     }
 
     public function edit(Package $package)
     {
+        $package->load(['includes', 'excludes']);
         return view('admin.packages.edit', compact('package'));
     }
 
@@ -114,7 +156,13 @@ class PackageController extends Controller
             'duration' => ['required', 'integer', 'min:1'],
             'description' => ['nullable', 'string'],
             'status' => ['required', 'in:aktif,nonaktif'],
+            'package_type' => ['required', 'in:umrah,haji'],
+            'category_label' => ['nullable', 'string', 'max:100'],
             'main_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'includes' => ['nullable', 'array'],
+            'includes.*' => ['required', 'string', 'max:255'],
+            'excludes' => ['nullable', 'array'],
+            'excludes.*' => ['required', 'string', 'max:255'],
         ], [
             'main_photo.image' => 'Foto utama harus berupa file gambar.',
             'main_photo.mimes' => 'Format file tidak didukung. Silakan upload JPG, JPEG, PNG, atau WEBP.',
@@ -134,14 +182,32 @@ class PackageController extends Controller
 
         // Handle file uploads
         if ($request->hasFile('main_photo')) {
-            // Delete old photo
-            if ($package->main_photo && Storage::disk('public')->exists($package->main_photo)) {
-                Storage::disk('public')->delete($package->main_photo);
-            }
-            $validated['main_photo'] = $request->file('main_photo')->store('packages/photos', 'public');
+            $validated['main_photo'] = $this->imageUploadService->replaceFile($package->main_photo, $request->file('main_photo'), 'packages/photos', 'public_photo');
         }
 
-        $package->update($validated);
+        $package->update(collect($validated)->except(['includes', 'excludes'])->toArray());
+
+        // Sync includes
+        $package->includes()->delete();
+        if (!empty($validated['includes'])) {
+            $sortOrder = 0;
+            foreach ($validated['includes'] as $item) {
+                if (trim($item)) {
+                    $package->includes()->create(['item' => trim($item), 'sort_order' => $sortOrder++]);
+                }
+            }
+        }
+
+        // Sync excludes
+        $package->excludes()->delete();
+        if (!empty($validated['excludes'])) {
+            $sortOrder = 0;
+            foreach ($validated['excludes'] as $item) {
+                if (trim($item)) {
+                    $package->excludes()->create(['item' => trim($item), 'sort_order' => $sortOrder++]);
+                }
+            }
+        }
 
         return redirect()->route('admin.packages.show', $package)
             ->with('success', 'Paket berhasil diperbarui.');
@@ -161,11 +227,7 @@ class PackageController extends Controller
             'main_photo.max' => 'Ukuran gambar maksimal 5MB.',
         ]);
 
-        if ($package->main_photo && Storage::disk('public')->exists($package->main_photo)) {
-            Storage::disk('public')->delete($package->main_photo);
-        }
-
-        $path = $request->file('main_photo')->store('packages/photos', 'public');
+        $path = $this->imageUploadService->replaceFile($package->main_photo, $request->file('main_photo'), 'packages/photos', 'public_photo');
         $package->update(['main_photo' => $path]);
 
         return response()->json([

@@ -1,0 +1,227 @@
+<x-layouts.admin title="Edit Hotel">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="mb-6" style="animation: fadeSlideUp 0.4s ease both; animation-delay: 0.05s;">
+            <div class="flex items-center text-sm text-[#526057] mb-4 gap-2">
+                <a href="{{ route('admin.hotels.index') }}" class="hover:text-[#122B1F] transition-colors">Kelola Hotel</a>
+                <span>/</span>
+                <span class="text-[#1B3B2B] font-medium">Edit Hotel</span>
+            </div>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h1 class="text-2xl font-bold text-[#122B1F]">Edit Hotel: {{ $hotel->name }}</h1>
+                @php
+                    $usageCount = ($hotel->variants_as_makkah_count ?? 0) + ($hotel->variants_as_madinah_count ?? 0);
+                @endphp
+                @if($usageCount > 0)
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#EFF3EB] text-[#1B3B2B] border border-[#E0E7DC]">
+                    Digunakan di {{ $usageCount }} sub-paket
+                </span>
+                @endif
+            </div>
+        </div>
+
+        @if($errors->any())
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" style="animation: fadeSlideUp 0.4s ease both; animation-delay: 0.1s;">
+            <div class="flex">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="font-medium">Terdapat kesalahan pada input Anda:</div>
+            </div>
+            <ul class="list-disc list-inside mt-2 ml-5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
+        <div class="bg-white rounded-2xl border border-[#E0E7DC] shadow-xs overflow-hidden" style="animation: fadeSlideUp 0.4s ease both; animation-delay: 0.15s;" x-data="{
+            photoPreview: '{{ $hotel->main_photo ? Storage::url($hotel->main_photo) : '' }}',
+            updatePreview(event) {
+                const file = event.target.files[0];
+                if(file) {
+                    this.photoPreview = URL.createObjectURL(file);
+                }
+            },
+            facilities: {{ collect(old('facilities', $selectedFacilities ?? []))->toJson() }},
+            toggleFacility(id) {
+                const index = this.facilities.indexOf(id.toString());
+                if (index > -1) {
+                    this.facilities.splice(index, 1);
+                } else {
+                    this.facilities.push(id.toString());
+                }
+            },
+            deletedPhotos: [],
+            markPhotoDeleted(id) {
+                if(!this.deletedPhotos.includes(id)) {
+                    this.deletedPhotos.push(id);
+                }
+            }
+        }">
+            <form action="{{ route('admin.hotels.update', $hotel) }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                
+                <div class="p-6 space-y-8">
+                    <!-- Section 1: Informasi Hotel -->
+                    <div>
+                        <h2 class="text-[11px] font-semibold text-[#4D5E54] uppercase tracking-wider mb-4 border-b border-[#E0E7DC] pb-2">Informasi Hotel</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="col-span-2 md:col-span-1">
+                                <label for="name" class="block text-sm font-medium text-[#122B1F] mb-1">Nama Hotel <span class="text-red-500">*</span></label>
+                                <input type="text" id="name" name="name" value="{{ old('name', $hotel->name) }}" required
+                                    class="w-full rounded-xl border border-[#E0E7DC] text-sm px-4 py-2.5 focus:ring-[#1B3B2B] focus:border-[#1B3B2B] outline-none transition-colors">
+                            </div>
+
+                            <div class="col-span-2 md:col-span-1">
+                                <label for="city" class="block text-sm font-medium text-[#122B1F] mb-1">Kota <span class="text-red-500">*</span></label>
+                                <select id="city" name="city" required class="w-full rounded-xl border border-[#E0E7DC] text-sm px-4 py-2.5 focus:ring-[#1B3B2B] focus:border-[#1B3B2B] outline-none transition-colors bg-white">
+                                    <option value="Makkah" {{ old('city', $hotel->city) == 'Makkah' ? 'selected' : '' }}>Makkah</option>
+                                    <option value="Madinah" {{ old('city', $hotel->city) == 'Madinah' ? 'selected' : '' }}>Madinah</option>
+                                </select>
+                            </div>
+
+                            <div class="col-span-2 md:col-span-1">
+                                <label for="star_rating" class="block text-sm font-medium text-[#122B1F] mb-1">Bintang <span class="text-red-500">*</span></label>
+                                <select id="star_rating" name="star_rating" required class="w-full rounded-xl border border-[#E0E7DC] text-sm px-4 py-2.5 focus:ring-[#1B3B2B] focus:border-[#1B3B2B] outline-none transition-colors bg-white">
+                                    <option value="3" {{ old('star_rating', $hotel->star_rating) == '3' ? 'selected' : '' }}>3 Bintang</option>
+                                    <option value="4" {{ old('star_rating', $hotel->star_rating) == '4' ? 'selected' : '' }}>4 Bintang</option>
+                                    <option value="5" {{ old('star_rating', $hotel->star_rating) == '5' ? 'selected' : '' }}>5 Bintang</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-span-2 md:col-span-1">
+                                <label for="distance_to_haram" class="block text-sm font-medium text-[#122B1F] mb-1">
+                                    Jarak ke Haram / Nabawi <span class="text-xs text-[#526057] font-normal">(Opsional)</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="number" id="distance_to_haram" name="distance_to_haram" value="{{ old('distance_to_haram', $hotel->distance_to_haram) }}" min="0"
+                                        class="w-full rounded-xl border border-[#E0E7DC] text-sm px-4 py-2.5 pr-16 focus:ring-[#1B3B2B] focus:border-[#1B3B2B] outline-none transition-colors">
+                                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                        <span class="text-[#526057] text-sm">meter</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-span-2">
+                                <label for="address" class="block text-sm font-medium text-[#122B1F] mb-1">
+                                    Alamat Lengkap <span class="text-xs text-[#526057] font-normal">(Opsional)</span>
+                                </label>
+                                <textarea id="address" name="address" rows="2" 
+                                    class="w-full rounded-xl border border-[#E0E7DC] text-sm px-4 py-2.5 focus:ring-[#1B3B2B] focus:border-[#1B3B2B] outline-none transition-colors">{{ old('address', $hotel->address) }}</textarea>
+                            </div>
+
+                            <div class="col-span-2">
+                                <label for="description" class="block text-sm font-medium text-[#122B1F] mb-1">
+                                    Deskripsi Hotel <span class="text-xs text-[#526057] font-normal">(Opsional)</span>
+                                </label>
+                                <textarea id="description" name="description" rows="4" 
+                                    class="w-full rounded-xl border border-[#E0E7DC] text-sm px-4 py-2.5 focus:ring-[#1B3B2B] focus:border-[#1B3B2B] outline-none transition-colors">{{ old('description', $hotel->description) }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Foto Hotel -->
+                    <div>
+                        <h2 class="text-[11px] font-semibold text-[#4D5E54] uppercase tracking-wider mb-4 border-b border-[#E0E7DC] pb-2">Foto Hotel</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <!-- Foto Utama -->
+                            <div class="col-span-2 md:col-span-1">
+                                <label class="block text-sm font-medium text-[#122B1F] mb-2">Foto Utama Hotel</label>
+                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-[#E0E7DC] border-dashed rounded-xl relative overflow-hidden bg-[#F8FAF7]" :class="photoPreview ? 'p-2 border-solid' : ''">
+                                    
+                                    <template x-if="photoPreview">
+                                        <div class="relative w-full group flex items-center justify-center min-h-[140px]">
+                                            <img :src="photoPreview" class="w-full max-h-52 object-contain rounded-xl" alt="Preview" />
+                                            <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
+                                                <button type="button" @click="photoPreview = null; $refs.photoInput.value = ''" class="bg-white text-red-600 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm hover:bg-gray-50">
+                                                    Ganti / Hapus
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <div class="space-y-1 text-center" x-show="!photoPreview">
+                                        <svg class="mx-auto h-12 w-12 text-[#526057]" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        <div class="flex text-sm text-[#526057] justify-center">
+                                            <label for="main_photo" class="relative cursor-pointer bg-white rounded-md font-medium text-[#1B3B2B] hover:text-[#122B1F] focus-within:outline-none">
+                                                <span>Upload Foto Baru</span>
+                                                <input id="main_photo" name="main_photo" type="file" accept="image/jpeg,image/png,image/webp,image/jpg" class="sr-only" x-ref="photoInput" @change="updatePreview">
+                                            </label>
+                                        </div>
+                                        <p class="text-xs text-[#526057]">Upload akan menggantikan foto lama</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Galeri Foto -->
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-[#122B1F] mb-2">Galeri Foto</label>
+                                
+                                <!-- Existing Gallery Photos -->
+                                @if($hotel->photos && $hotel->photos->count() > 0)
+                                <div class="flex flex-wrap gap-4 mb-4">
+                                    @foreach($hotel->photos as $photo)
+                                    <div class="relative w-24 h-24 rounded-lg overflow-hidden border border-[#E0E7DC]" x-show="!deletedPhotos.includes({{ $photo->id }})">
+                                        <img src="{{ Storage::url($photo->photo_path) }}" class="w-full h-full object-cover">
+                                        <button type="button" @click="markPhotoDeleted({{ $photo->id }})" class="absolute top-1 right-1 bg-white/90 text-red-600 p-1 rounded-md hover:bg-white transition-colors" title="Hapus Foto">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                    @endforeach
+                                    <template x-for="deletedId in deletedPhotos">
+                                        <input type="hidden" name="deleted_photo_ids[]" :value="deletedId">
+                                    </template>
+                                </div>
+                                @endif
+                                
+                                <input type="file" name="gallery_photos[]" id="gallery_photos" multiple accept="image/jpeg,image/png,image/webp,image/jpg"
+                                       class="w-full rounded-xl border border-[#E0E7DC] text-sm px-4 py-2.5 focus:ring-[#1B3B2B] focus:border-[#1B3B2B] outline-none transition-colors bg-white">
+                                <p class="text-xs text-[#526057] mt-2">Dapat memilih beberapa file sekaligus untuk ditambahkan.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Fasilitas -->
+                    <div>
+                        <h2 class="text-[11px] font-semibold text-[#4D5E54] uppercase tracking-wider mb-4 border-b border-[#E0E7DC] pb-2">Fasilitas</h2>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($facilities ?? [] as $facility)
+                            <button type="button" 
+                                    @click="toggleFacility('{{ $facility->id }}')"
+                                    :class="facilities.includes('{{ $facility->id }}') ? 'bg-[#1B3B2B] text-white border-[#1B3B2B]' : 'bg-white text-[#526057] border-[#E0E7DC] hover:border-[#1B3B2B]'"
+                                    class="px-4 py-2 rounded-full border text-sm font-medium transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer">
+                                
+                                <template x-if="facilities.includes('{{ $facility->id }}')">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </template>
+                                
+                                <span>{{ $facility->name }}</span>
+                            </button>
+                            @endforeach
+                            
+                            <!-- Hidden inputs for form submission -->
+                            <template x-for="fac in facilities">
+                                <input type="hidden" name="facilities[]" :value="fac">
+                            </template>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="px-6 py-4 bg-[#F8FAF7] border-t border-[#E0E7DC] flex justify-end gap-3">
+                    <a href="{{ route('admin.hotels.index') }}" class="px-4 py-2 bg-white border border-[#E0E7DC] text-[#122B1F] rounded-xl text-sm font-medium hover:bg-[#F8FAF7] transition-colors">
+                        Batal
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-[#1B3B2B] text-white rounded-xl text-sm font-medium hover:bg-[#12271E] transition-colors">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</x-layouts.admin>

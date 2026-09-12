@@ -26,12 +26,10 @@ class PackageRestructuringTest extends TestCase
 
         $this->admin = User::factory()->create([
             'role' => 'admin',
-            'phone_verified_at' => now(),
         ]);
 
         $this->jamaah = User::factory()->create([
             'role' => 'jamaah',
-            'phone_verified_at' => now(),
         ]);
     }
 
@@ -43,6 +41,7 @@ class PackageRestructuringTest extends TestCase
             'duration' => 12,
             'description' => 'Paket umroh 12 hari terbaik dengan bimbingan ibadah berpengalaman.',
             'status' => 'aktif',
+            'package_type' => 'umrah',
         ]);
 
         $response->assertRedirect();

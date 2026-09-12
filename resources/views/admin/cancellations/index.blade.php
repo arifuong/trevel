@@ -9,12 +9,24 @@
         openDetail(cancellation) {
             this.selectedCancellation = cancellation;
             this.detailModal = true;
+            document.body.classList.add('overflow-hidden');
+        },
+        closeDetail() {
+            this.detailModal = false;
+            if (!this.rejectModal) {
+                document.body.classList.remove('overflow-hidden');
+            }
         },
         openReject(url, name) {
             this.rejectUrl = url;
             this.jamaahName = name;
             this.detailModal = false;
             this.rejectModal = true;
+            document.body.classList.add('overflow-hidden');
+        },
+        closeReject() {
+            this.rejectModal = false;
+            document.body.classList.remove('overflow-hidden');
         }
     }">
 
@@ -36,21 +48,6 @@
                 </span>
             </div>
         </div>
-
-        {{-- Flash Alerts --}}
-        @if(session('success'))
-            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs sm:text-sm text-emerald-800 flex items-center gap-3 shadow-xs">
-                <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span>{{ session('success') }}</span>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs sm:text-sm text-red-800 flex items-center gap-3 shadow-xs">
-                <svg class="w-5 h-5 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                <span>{{ session('error') }}</span>
-            </div>
-        @endif
 
         {{-- Metric Cards --}}
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -275,20 +272,37 @@
             @endif
         </div>
 
-        {{-- Detail Modal --}}
-        <div x-show="detailModal" 
-             x-cloak
-             class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             style="display: none;">
-            
-            <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-[#E0E7DC]"
-                 @click.away="detailModal = false">
+        {{-- Detail Modal (Fixed Viewport Overlay) --}}
+        <template x-teleport="body">
+            <div x-show="detailModal" 
+                 x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+                 @keydown.escape.window="closeDetail()"
+                 style="display: none;"
+                 role="dialog"
+                 aria-modal="true">
+                
+                {{-- Backdrop --}}
+                <div x-show="detailModal"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 bg-[#122B1F]/60 backdrop-blur-xs transition-opacity"
+                     @click="closeDetail()"></div>
+
+                {{-- Modal Card --}}
+                <div x-show="detailModal"
+                     x-transition:enter="ease-out duration-300" 
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave="ease-in duration-200" 
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     class="relative bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-[#E0E7DC] z-10 my-auto max-h-[90vh] overflow-y-auto"
+                     @click.outside="closeDetail()">
                 
                 <div class="flex items-center justify-between pb-3 border-b border-[#E0E7DC]">
                     <div class="flex items-center gap-3">
@@ -391,61 +405,79 @@
                 </div>
 
             </div>
-        </div>
+        </template>
 
-        {{-- Reject Modal --}}
-        <div x-show="rejectModal" 
-             x-cloak
-             class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             style="display: none;">
-            
-            <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-[#E0E7DC]"
-                 @click.away="rejectModal = false">
+        {{-- Reject Modal (Fixed Viewport Overlay) --}}
+        <template x-teleport="body">
+            <div x-show="rejectModal" 
+                 x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+                 @keydown.escape.window="closeReject()"
+                 style="display: none;"
+                 role="dialog"
+                 aria-modal="true">
                 
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                {{-- Backdrop --}}
+                <div x-show="rejectModal"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 bg-[#122B1F]/60 backdrop-blur-xs transition-opacity"
+                     @click="closeReject()"></div>
+
+                {{-- Modal Card --}}
+                <div x-show="rejectModal"
+                     x-transition:enter="ease-out duration-300" 
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave="ease-in duration-200" 
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     class="relative bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-[#E0E7DC] z-10 my-auto"
+                     @click.outside="closeReject()">
+                    
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-[#12271E]">Tolak Pembatalan</h3>
+                            <p class="text-xs text-[#526057]" x-text="'Jamaah: ' + jamaahName"></p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-base font-bold text-[#12271E]">Tolak Pembatalan</h3>
-                        <p class="text-xs text-[#526057]" x-text="'Jamaah: ' + jamaahName"></p>
-                    </div>
+
+                    <form :action="rejectUrl" method="POST" class="space-y-4"
+                          @submit="if(!$refs.rejectReasonInput.value.trim()){ alert('Alasan penolakan pengajuan pembatalan wajib diisi.'); $event.preventDefault(); }">
+                        @csrf
+                        <input type="hidden" name="action" value="reject">
+
+                        <div>
+                            <label for="rejection_reason" class="block text-[11px] font-semibold text-[#4D5E54] uppercase tracking-wider mb-1.5">
+                                Alasan Penolakan <span class="text-red-500">*</span>
+                            </label>
+                            <textarea id="rejection_reason" name="rejection_reason" x-ref="rejectReasonInput" rows="4" required minlength="5" maxlength="1000"
+                                      class="w-full px-3.5 py-2.5 rounded-xl border border-[#E0E7DC] text-xs sm:text-sm text-[#12271E] placeholder-[#526057]/50 focus:outline-none focus:ring-2 focus:ring-red-400/20 focus:border-red-400"
+                                      placeholder="Contoh: Pembatalan tidak dapat diproses karena dokumen visa dan tiket penerbangan non-refundable sudah diterbitkan."></textarea>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-2 border-t border-[#E0E7DC]">
+                            <button type="button" @click="closeReject()" 
+                                    class="px-4 py-2.5 rounded-xl border border-[#E0E7DC] text-xs font-semibold text-[#526057] hover:bg-[#EFF3EB] transition-colors cursor-pointer">
+                                Batal
+                            </button>
+                            <button type="submit" 
+                                    class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer">
+                                Kirim Penolakan
+                            </button>
+                        </div>
+                    </form>
+
                 </div>
-
-                <form :action="rejectUrl" method="POST" class="space-y-4"
-                      @submit="if(!$refs.rejectReasonInput.value.trim()){ alert('Alasan penolakan pengajuan pembatalan wajib diisi.'); $event.preventDefault(); }">
-                    @csrf
-                    <input type="hidden" name="action" value="reject">
-
-                    <div>
-                        <label for="rejection_reason" class="block text-[11px] font-semibold text-[#4D5E54] uppercase tracking-wider mb-1.5">
-                            Alasan Penolakan <span class="text-red-500">*</span>
-                        </label>
-                        <textarea id="rejection_reason" name="rejection_reason" x-ref="rejectReasonInput" rows="4" required minlength="5" maxlength="1000"
-                                  class="w-full px-3.5 py-2.5 rounded-xl border border-[#E0E7DC] text-xs sm:text-sm text-[#12271E] placeholder-[#526057]/50 focus:outline-none focus:ring-2 focus:ring-red-400/20 focus:border-red-400"
-                                  placeholder="Contoh: Pembatalan tidak dapat diproses karena dokumen visa dan tiket penerbangan non-refundable sudah diterbitkan."></textarea>
-                    </div>
-
-                    <div class="flex items-center justify-end gap-3 pt-2 border-t border-[#E0E7DC]">
-                        <button type="button" @click="rejectModal = false" 
-                                class="px-4 py-2.5 rounded-xl border border-[#E0E7DC] text-xs font-semibold text-[#526057] hover:bg-[#EFF3EB] transition-colors cursor-pointer">
-                            Batal
-                        </button>
-                        <button type="submit" 
-                                class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer">
-                            Kirim Penolakan
-                        </button>
-                    </div>
-                </form>
-
             </div>
-        </div>
+        </template>
 
     </div>
 

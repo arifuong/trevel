@@ -53,7 +53,9 @@
                         4 => ['title' => 'Calon Jamaah Resmi', 'desc' => 'Tercatat dalam manifes keberangkatan'],
                         5 => ['title' => 'Pelunasan Bertahap', 'desc' => 'Setor tabungan umrah sesuai kemampuan'],
                         6 => ['title' => 'Lunas', 'desc' => 'Seluruh biaya perjalanan telah selesai'],
-                        7 => ['title' => 'Siap Berangkat', 'desc' => 'Manasik dan penerbangan ke Tanah Suci'],
+                        7 => ['title' => 'Kelengkapan Dokumen Keberangkatan', 'desc' => 'Unggah Visa Umrah, Vaksin Meningitis & Foto Visa'],
+                        8 => ['title' => 'Siap Berangkat', 'desc' => 'Manasik final dan penerbangan ke Tanah Suci'],
+                        9 => ['title' => 'Selesai', 'desc' => 'Rangkaian ibadah tuntas & kepulangan mabrur'],
                     ];
                 @endphp
 
@@ -205,33 +207,76 @@
                     </div>
                 @endif
 
+                {{-- Banner Selebrasi Selesai Ibadah (Tahap 9) --}}
+                @if($registration->status === 'selesai' || $currentStep === 9)
+                    <div class="bg-gradient-to-r from-[#0F261B] via-[#1B3B2B] to-[#12271E] rounded-3xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden border border-emerald-800/40" style="animation: fadeSlideUp 0.4s ease 0.12s both">
+                        <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="absolute -left-12 -top-12 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
+
+                        <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                            <div class="space-y-3 max-w-2xl">
+                                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                                    <span>🎉 Alhamdulillah &bull; Perjalanan Ibadah Telah Selesai</span>
+                                </div>
+                                <h3 class="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-white">
+                                    Semoga Menjadi Ibadah yang Mabrur
+                                </h3>
+                                <p class="text-emerald-100/90 text-xs sm:text-sm leading-relaxed font-light">
+                                    Keluarga besar <strong>PT. Zein Internasional</strong> mengucapkan terima kasih yang sebesar-besarnya atas kepercayaan Bapak/Ibu <strong>{{ $user->name }}</strong> dan keluarga telah beribadah ke Tanah Suci bersama kami. Semoga seluruh amal ibadah, tawaf, sa'i, dan doa yang dipanjatkan diijabah oleh Allah SWT serta membawa keberkahan abadi bagi keluarga.
+                                </p>
+                                <div class="flex flex-wrap items-center gap-3 pt-1 text-xs text-emerald-200/80">
+                                    <span class="flex items-center gap-1.5 font-medium">
+                                        <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        Status: Selesai & Terarsip
+                                    </span>
+                                    <span>&bull;</span>
+                                    <span>Paket: {{ $registration->package->name }}</span>
+                                </div>
+                            </div>
+                            <div class="shrink-0 flex flex-wrap items-center justify-center sm:justify-end gap-2 w-full md:w-auto">
+                                <a href="{{ route('documents.invoice.pdf', $registration) }}" 
+                                   class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all shadow-md active:scale-98">
+                                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                                    <span>Unduh PDF Invoice</span>
+                                </a>
+                                <a href="{{ route('documents.invoice', $registration) }}" target="_blank"
+                                   class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold text-[#12271E] bg-white hover:bg-emerald-50 transition-all shadow-md active:scale-98">
+                                    <svg class="w-4 h-4 text-[#1B3B2B]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                                    <span>Lihat Invoice</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Indikator Tahapan Perjalanan --}}
                 @if(!$isCancelled)
                     <div class="bg-white rounded-3xl border border-[#E0E7DC] p-6 sm:p-8 shadow-xs" style="animation: fadeSlideUp 0.4s ease 0.15s both">
                         <div class="flex items-center justify-between mb-6 pb-3 border-b border-[#E0E7DC]/70">
                             <span class="text-xs font-bold uppercase tracking-wider text-[#4D5E54]">Tahapan Persiapan Ibadah Anda</span>
-                            <span class="text-xs font-semibold text-[#1B3B2B]">Langkah {{ $currentStep }} dari 7</span>
+                            <span class="text-xs font-semibold text-[#1B3B2B]">Langkah {{ $currentStep }} dari {{ \App\Models\Registration::TOTAL_STEPS }}</span>
                         </div>
                         
                         {{-- Desktop Horizontal Stepper --}}
-                        <div class="hidden lg:grid grid-cols-7 gap-3 relative">
+                        <div class="hidden lg:grid grid-cols-9 gap-2 relative">
                             @foreach($steps as $stepIdx => $stepInfo)
                                 @php
                                     $isPassed = $currentStep > $stepIdx;
                                     $isCurrent = $currentStep === $stepIdx;
                                     $isUpcoming = $currentStep < $stepIdx;
+                                    $isDone = $isPassed || ($stepIdx === 9 && $currentStep === 9);
                                 @endphp
                                 <div class="flex flex-col items-center text-center relative z-10 min-w-0">
-                                    {{-- Lingkaran Angka --}}
+                                    {{-- Lingkaran Angka / Checkmark --}}
                                     <div class="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all mb-2.5 shrink-0
-                                                {{ $isPassed ? 'bg-emerald-600 text-white shadow-sm' : ($isCurrent ? 'bg-[#1B3B2B] text-white ring-4 ring-[#1B3B2B]/20 shadow-md' : 'bg-[#EFF3EB] text-[#526057] border border-[#CCD8C7]') }}">
-                                        @if($isPassed)
+                                                {{ $isDone ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-200' : ($isCurrent ? 'bg-[#1B3B2B] text-white ring-4 ring-[#1B3B2B]/20 shadow-md' : 'bg-[#EFF3EB] text-[#526057] border border-[#CCD8C7]') }}">
+                                        @if($isDone)
                                             <svg class="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
                                         @else
                                             {{ $stepIdx }}
                                         @endif
                                     </div>
-                                    <span class="text-[11px] font-bold leading-tight line-clamp-2 px-1 {{ $isCurrent ? 'text-[#1B3B2B]' : ($isPassed ? 'text-[#12271E]' : 'text-[#526057]/70') }}">
+                                    <span class="text-[11px] font-bold leading-tight line-clamp-2 px-1 {{ $isDone ? 'text-emerald-800' : ($isCurrent ? 'text-[#1B3B2B]' : 'text-[#526057]/70') }}">
                                         {{ $stepInfo['title'] }}
                                     </span>
                                 </div>
@@ -245,18 +290,19 @@
                                     $isPassed = $currentStep > $stepIdx;
                                     $isCurrent = $currentStep === $stepIdx;
                                     $isUpcoming = $currentStep < $stepIdx;
+                                    $isDone = $isPassed || ($stepIdx === 9 && $currentStep === 9);
                                 @endphp
-                                <div class="flex items-start gap-3.5 p-2 rounded-xl {{ $isCurrent ? 'bg-[#EFF3EB]/50 border border-[#CCD8C7]' : '' }}">
+                                <div class="flex items-start gap-3.5 p-2 rounded-xl {{ $isCurrent && !$isDone ? 'bg-[#EFF3EB]/50 border border-[#CCD8C7]' : ($isDone && $stepIdx === 9 ? 'bg-emerald-50/70 border border-emerald-200' : '') }}">
                                     <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5
-                                                {{ $isPassed ? 'bg-emerald-600 text-white' : ($isCurrent ? 'bg-[#1B3B2B] text-white ring-2 ring-[#1B3B2B]/20' : 'bg-[#EFF3EB] text-[#526057]') }}">
-                                        @if($isPassed)
+                                                {{ $isDone ? 'bg-emerald-600 text-white' : ($isCurrent ? 'bg-[#1B3B2B] text-white ring-2 ring-[#1B3B2B]/20' : 'bg-[#EFF3EB] text-[#526057]') }}">
+                                        @if($isDone)
                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
                                         @else
                                             {{ $stepIdx }}
                                         @endif
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                        <p class="text-xs font-bold {{ $isCurrent ? 'text-[#1B3B2B]' : ($isPassed ? 'text-[#12271E]' : 'text-[#526057]') }}">
+                                        <p class="text-xs font-bold {{ $isDone ? 'text-emerald-800' : ($isCurrent ? 'text-[#1B3B2B]' : 'text-[#526057]') }}">
                                             {{ $stepInfo['title'] }}
                                         </p>
                                         <p class="text-[11px] text-[#526057] mt-0.5 leading-snug">{{ $stepInfo['desc'] }}</p>
@@ -323,8 +369,224 @@
                                         @endif
                                     </span>
                                 </div>
-                            </div>
                         </div>
+
+                        {{-- ══════════════════════════════════════════════════════════════════════════ --}}
+                        {{-- TAHAP 7: KELENGKAPAN DOKUMEN KEBERANGKATAN (VISA, VAKSIN, FOTO VISA)        --}}
+                        {{-- ══════════════════════════════════════════════════════════════════════════ --}}
+                        @if($currentStep >= 6 && isset($departureSummary))
+                            <div class="bg-white rounded-3xl border {{ $currentStep === 7 ? 'border-amber-300 ring-4 ring-amber-100/60' : 'border-[#E0E7DC]' }} p-6 sm:p-7 shadow-xs space-y-6" id="departure-documents-section">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E0E7DC]">
+                                    <div class="space-y-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $currentStep === 7 ? 'bg-amber-100 text-amber-900 border border-amber-300' : ($currentStep > 7 ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-[#EFF3EB] text-[#4D5E54]') }}">
+                                                Tahap 7 &bull; Persiapan Keberangkatan
+                                            </span>
+                                            @if($departureSummary['is_all_valid'])
+                                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                                                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                                                    <span>Seluruh Dokumen Lengkap & Valid</span>
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <h3 class="text-lg font-bold text-[#12271E] flex items-center gap-2">
+                                            <span>Kelengkapan Dokumen Keberangkatan</span>
+                                        </h3>
+                                        <p class="text-xs text-[#526057]">
+                                            Unggah Visa Umrah, Sertifikat Vaksin Meningitis, dan Pas Foto Visa untuk setiap anggota keluarga sebelum penerbangan.
+                                        </p>
+                                    </div>
+
+                                    {{-- Ringkasan Progress Dokumen Keberangkatan --}}
+                                    <div class="flex items-center gap-2 shrink-0 bg-[#F8FAF7] p-2.5 rounded-2xl border border-[#E0E7DC]">
+                                        <div class="text-center px-3 py-1">
+                                            <span class="text-[10px] uppercase font-bold text-[#4D5E54] block">Valid</span>
+                                            <span class="text-sm font-bold text-emerald-700">{{ $departureSummary['total_valid'] }} / {{ $departureSummary['total_required'] }}</span>
+                                        </div>
+                                        @if($departureSummary['total_pending'] > 0)
+                                            <div class="text-center px-3 py-1 border-l border-[#E0E7DC]">
+                                                <span class="text-[10px] uppercase font-bold text-amber-700 block">Menunggu</span>
+                                                <span class="text-sm font-bold text-amber-800">{{ $departureSummary['total_pending'] }}</span>
+                                            </div>
+                                        @endif
+                                        @if($departureSummary['total_missing'] > 0)
+                                            <div class="text-center px-3 py-1 border-l border-[#E0E7DC]">
+                                                <span class="text-[10px] uppercase font-bold text-red-700 block">Belum</span>
+                                                <span class="text-sm font-bold text-red-700">{{ $departureSummary['total_missing'] }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- Info Box Ketentuan --}}
+                                @if($currentStep === 7)
+                                    <div class="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-950 space-y-1.5 leading-relaxed">
+                                        <div class="font-bold flex items-center gap-1.5 text-amber-900">
+                                            <svg class="w-4 h-4 text-amber-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
+                                            <span>Ketentuan Dokumen Keberangkatan (Pra-Keberangkatan):</span>
+                                        </div>
+                                        <ul class="list-disc list-inside space-y-1 text-[#4D5E54] pl-1">
+                                            <li><strong>Visa Umrah:</strong> File visa elektronik (e-Visa) resmi Kerajaan Arab Saudi dalam format PDF atau Gambar (maks 10 MB).</li>
+                                            <li><strong>Sertifikat Vaksin Meningitis:</strong> Buku kuning/sertifikat vaksin meningitis resmi dari faskes terakreditasi Kemenkes.</li>
+                                            <li><strong>Foto Visa:</strong> Pas foto khusus visa ukuran 4x6 latar belakang <em>putih/biru</em>, fokus wajah 80%, pakaian kontras, tanpa kacamata.</li>
+                                        </ul>
+                                    </div>
+                                @endif
+
+                                {{-- Daftar Jamaah & Checklist Dokumen --}}
+                                <div class="space-y-6">
+                                    @foreach($departureSummary['members_data'] as $mIndex => $item)
+                                        @php
+                                            $mem = $item['member'];
+                                            $docs = $item['docs'];
+                                        @endphp
+                                        <div class="p-5 rounded-2xl border border-[#E0E7DC] bg-[#F8FAF7] space-y-4" x-data="{ expanded: true }">
+                                            
+                                            {{-- Header Anggota --}}
+                                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E0E7DC]">
+                                                <div class="flex items-center gap-3 min-w-0">
+                                                    <span class="w-7 h-7 rounded-full bg-[#1B3B2B] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                                                        {{ $mIndex + 1 }}
+                                                    </span>
+                                                    <div class="min-w-0">
+                                                        <h4 class="text-sm font-bold text-[#12271E] truncate">{{ $mem->name }}</h4>
+                                                        <span class="text-xs text-[#526057] block truncate">
+                                                            {{ $mem->relationship_label }} &bull; NIK: <span class="font-mono font-medium text-[#12271E]">{{ $mem->nik }}</span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <button type="button" @click="expanded = !expanded" class="text-xs font-semibold text-[#1B3B2B] hover:underline flex items-center gap-1 self-start sm:self-auto cursor-pointer">
+                                                    <span x-text="expanded ? 'Sembunyikan Berkas' : 'Tampilkan Berkas'"></span>
+                                                    <svg class="w-3.5 h-3.5 transition-transform" :class="expanded ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                                                </button>
+                                            </div>
+
+                                            {{-- Grid 3 Dokumen Keberangkatan --}}
+                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" x-show="expanded" x-collapse>
+                                                @foreach($docs as $docItem)
+                                                    @php
+                                                        $docType = $docItem['doc_type'];
+                                                        $doc = $docItem['document'];
+                                                        $status = $docItem['status'];
+                                                    @endphp
+                                                    <div class="bg-white rounded-2xl border p-4 flex flex-col justify-between space-y-3.5 transition-all shadow-2xs {{ $status === 'valid' ? 'border-emerald-200 ring-1 ring-emerald-100' : ($status === 'ditolak' ? 'border-red-200 bg-red-50/20' : ($status === 'menunggu_verifikasi' ? 'border-amber-200 bg-amber-50/20' : 'border-[#E0E7DC]')) }}">
+                                                        
+                                                        {{-- Header Dokumen --}}
+                                                        <div class="space-y-1.5">
+                                                            <div class="flex items-start justify-between gap-2">
+                                                                <h5 class="text-xs font-bold text-[#12271E] leading-snug">
+                                                                    {{ $docType->name }}
+                                                                </h5>
+                                                                @if($docType->is_required)
+                                                                    <span class="text-[10px] font-bold text-red-500 shrink-0">*Wajib</span>
+                                                                @endif
+                                                            </div>
+                                                            <p class="text-[11px] text-[#526057] leading-relaxed line-clamp-2">
+                                                                {{ $docType->description }}
+                                                            </p>
+                                                        </div>
+
+                                                        {{-- Status Badge --}}
+                                                        <div>
+                                                            @if($status === 'valid')
+                                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                                    <svg class="w-3.5 h-3.5 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                                                                    <span>Terverifikasi Valid</span>
+                                                                </span>
+                                                            @elseif($status === 'ditolak')
+                                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-red-100 text-red-800 border border-red-200">
+                                                                    <svg class="w-3.5 h-3.5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                                    <span>Perlu Perbaikan (Ditolak)</span>
+                                                                </span>
+                                                            @elseif($status === 'menunggu_verifikasi')
+                                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                                                    <svg class="w-3.5 h-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                                    <span>Menunggu Verifikasi Admin</span>
+                                                                </span>
+                                                            @else
+                                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-gray-100 text-[#526057] border border-gray-200">
+                                                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                                                                    <span>Belum Diunggah</span>
+                                                                </span>
+                                                            @endif
+                                                        </div>
+
+                                                        {{-- Alasan Penolakan Jika Ditolak --}}
+                                                        @if($status === 'ditolak' && $doc?->rejection_reason)
+                                                            <div class="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-900 space-y-1">
+                                                                <div class="flex items-center gap-1.5 font-bold text-red-800">
+                                                                    <svg class="w-4 h-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.008v.008H12v-.008z"/></svg>
+                                                                    <span>Catatan Penolakan dari Admin:</span>
+                                                                </div>
+                                                                <p class="leading-relaxed pl-5 font-medium">{{ $doc->rejection_reason }}</p>
+                                                            </div>
+                                                        @endif
+
+                                                        {{-- Tombol Aksi / Form Unggah Langsung --}}
+                                                        <div class="pt-2 border-t border-[#E0E7DC]/70 space-y-2.5">
+                                                            @if($doc && $doc->file_url)
+                                                                <a href="{{ $doc->file_url }}" target="_blank"
+                                                                   class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#1B3B2B] bg-[#EFF3EB] hover:bg-[#E0E7DC] border border-[#CCD8C7] transition-all">
+                                                                    <svg class="w-3.5 h-3.5 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                                    <span>{{ $status === 'ditolak' ? 'Lihat Berkas Sebelumnya' : 'Lihat Berkas' }}</span>
+                                                                </a>
+                                                            @endif
+
+                                                            {{-- KONDISI FORM UPLOAD: HANYA tampil jika belum diunggah ATAU status = 'ditolak', dan pendaftaran BELUM selesai --}}
+                                                            @if((!$doc || $status === 'ditolak') && $registration->status !== \App\Models\Registration::STATUS_SELESAI)
+                                                                <div class="space-y-2">
+                                                                    @if($status === 'ditolak')
+                                                                        <div class="flex items-center gap-1 text-[11px] font-bold text-red-700">
+                                                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+                                                                            <span>Formulir Unggah Ulang Dokumen:</span>
+                                                                        </div>
+                                                                    @endif
+
+                                                                    <form method="POST" action="{{ route('jamaah.members.departure-documents.upload', [$mem, $docType]) }}" enctype="multipart/form-data" class="space-y-2">
+                                                                        @csrf
+                                                                        <div class="space-y-1">
+                                                                            <input type="file" name="file" required
+                                                                                   accept="{{ $docType->code === 'FOTO_VISA' ? '.jpg,.jpeg,.png,.webp' : '.jpg,.jpeg,.png,.webp,.pdf' }}"
+                                                                                   class="block w-full text-[11px] text-[#526057] file:mr-2 file:py-1.5 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold {{ $status === 'ditolak' ? 'file:bg-red-100 file:text-red-800 hover:file:bg-red-200 border-red-300' : 'file:bg-[#EFF3EB] file:text-[#1B3B2B] hover:file:bg-[#E0E7DC] border-[#CCD8C7]' }} cursor-pointer border rounded-xl p-1 bg-white">
+                                                                            <span class="text-[10px] text-[#526057]/80 block">
+                                                                                {{ $docType->code === 'FOTO_VISA' ? 'Format JPG/PNG, maks 10MB' : 'Format PDF/JPG/PNG, maks 10MB' }}
+                                                                            </span>
+                                                                        </div>
+                                                                        <button type="submit"
+                                                                                class="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-white {{ $status === 'ditolak' ? 'bg-red-700 hover:bg-red-800' : 'bg-emerald-700 hover:bg-emerald-800' }} transition-all cursor-pointer shadow-2xs">
+                                                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                                                                            <span>{{ $status === 'ditolak' ? 'Unggah Ulang Dokumen' : 'Unggah ' . $docType->name }}</span>
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            @elseif($registration->status === \App\Models\Registration::STATUS_SELESAI && (!$doc || $status === 'ditolak'))
+                                                                <div class="p-2 rounded-xl bg-gray-50 border border-gray-200 text-[11px] text-[#526057] text-center">
+                                                                    Dokumen diarsipkan.
+                                                                </div>
+                                                            @elseif($status === 'menunggu_verifikasi')
+                                                                <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-start gap-1.5">
+                                                                    <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                                    <span class="leading-relaxed">Dokumen telah dikirim dan sedang dalam proses peninjauan oleh tim admin.</span>
+                                                                </div>
+                                                            @elseif($status === 'valid')
+                                                                <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 flex items-center gap-1.5">
+                                                                    <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                                                                    <span class="font-medium">Dokumen telah diverifikasi & valid.</span>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+
+                                                    </div>
+                                                @endforeach
+                                            </div>
+
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
                         {{-- Anggota Keluarga & Status Dokumen --}}
                         <div class="bg-white rounded-3xl border border-[#E0E7DC] p-6 sm:p-7 shadow-xs space-y-5">
                             <div class="flex items-center justify-between pb-3 border-b border-[#E0E7DC]">
@@ -1094,11 +1356,16 @@
 
                                     {{-- Tombol Lihat & Unduh Invoice --}}
                                     <div class="pt-2 flex items-center gap-2">
+                                        <a href="{{ route('documents.invoice.pdf', $registration) }}" 
+                                           class="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-[#1B3B2B] hover:bg-[#132E22] active:scale-[0.98] transition-all shadow-2xs">
+                                            <svg class="w-4 h-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                                            <span>Unduh PDF</span>
+                                        </a>
                                         <a href="{{ route('documents.invoice', $registration) }}" 
                                            target="_blank"
-                                           class="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-[#1B3B2B] bg-[#EFF3EB] hover:bg-[#E0E7DC] active:scale-[0.98] transition-all border border-[#CCD8C7] shadow-2xs">
+                                           class="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-[#1B3B2B] bg-[#EFF3EB] hover:bg-[#E0E7DC] active:scale-[0.98] transition-all border border-[#CCD8C7] shadow-2xs">
                                             <svg class="w-4 h-4 text-[#1B3B2B]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                                            <span>Lihat Invoice</span>
+                                            <span>Lihat</span>
                                         </a>
                                         <a href="{{ route('documents.invoice.download', $registration) }}" 
                                            title="Unduh File Excel Invoice Resmi"
@@ -1347,7 +1614,7 @@
                         </div>
 
                         {{-- Tautan Pembatalan --}}
-                        @if(!in_array($registration->status, ['berangkat', 'dibatalkan']))
+                        @if(!in_array($registration->status, ['berangkat', \App\Models\Registration::STATUS_SELESAI, 'dibatalkan']))
                             <div class="text-center pt-1">
                                 <a href="{{ route('jamaah.registration.cancel') }}" class="text-[11.5px] font-semibold text-red-600 hover:text-red-700 hover:underline inline-flex items-center gap-1">
                                     <span>Ingin membatalkan pendaftaran? Cek simulasi biaya</span>
@@ -1382,6 +1649,7 @@
     </section>
 
     @push('scripts')
+    @vite(['resources/js/ocr.js'])
     <script>
         function resubmitForm(initialName, initialNik, initialNoKk, initialPassport, initialRel, initialBirthPlace, initialBirthDate, initialGender, initialAddress) {
             return {

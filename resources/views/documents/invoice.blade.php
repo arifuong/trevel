@@ -43,15 +43,20 @@
         </a>
 
         <div class="flex items-center gap-2">
+            <a href="{{ route('documents.invoice.pdf', $registration) }}" 
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#1B3B2B] hover:bg-[#132E22] shadow-xs transition-all">
+                <svg class="w-4 h-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                <span>Unduh PDF</span>
+            </a>
             <a href="{{ route('documents.invoice.download', $registration) }}" 
                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 shadow-xs transition-all">
                 <svg class="w-4 h-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                 <span>Unduh Excel</span>
             </a>
             <button onclick="window.print()" 
-                    class="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#1B3B2B] hover:bg-[#132E22] active:scale-95 shadow-sm transition-all cursor-pointer">
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-zinc-700 bg-white hover:bg-zinc-50 border border-zinc-300 active:scale-95 shadow-xs transition-all cursor-pointer">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.056.867-1.829 1.89-1.829h7.78c1.023 0 2.13.773 1.89 1.829l-1.004 4.417c-.172.756-.84 1.284-1.616 1.284H8.34c-.776 0-1.444-.528-1.616-1.284l-1.004-4.417zM6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 9V4a1 1 0 011-1h10a1 1 0 011 1v5"/></svg>
-                <span>Cetak / Simpan PDF</span>
+                <span>Cetak Browser</span>
             </button>
         </div>
     </div>

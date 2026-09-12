@@ -6,15 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\Registration;
 use App\Models\RegistrationCancellation;
-use App\Services\WhatsappOtpInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CancellationController extends Controller
 {
-    public function __construct(
-        private WhatsappOtpInterface $whatsapp
-    ) {}
 
     /**
      * Tampilkan halaman konfirmasi pembatalan pendaftaran dengan perhitungan fee.

@@ -5,19 +5,12 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
-use App\Services\WhatsappOtpInterface;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class RegisterController extends Controller
 {
-    public function __construct(
-        private WhatsappOtpInterface $whatsapp
-    ) {}
-
     /**
-     * Tampilkan form registrasi.
+     * Tampilkan form registrasi jamaah.
      */
     public function showForm()
     {
@@ -25,33 +18,30 @@ class RegisterController extends Controller
     }
 
     /**
-     * Proses registrasi & kirim OTP.
-     * PRD Section 6.1: Isi data → verifikasi OTP WhatsApp → akun aktif
+     * Proses registrasi akun jamaah langsung aktif.
      */
     public function register(RegisterRequest $request)
     {
         $phone = $request->phone;
-        // Normalisasi: 08xxx → 628xxx
-        if (str_starts_with($phone, '0')) {
-            $phone = '62' . substr($phone, 1);
+        $digits = preg_replace('/[^0-9]/', '', $phone);
+        if (str_starts_with($digits, '08')) {
+            $digits = '62' . substr($digits, 1);
+        } elseif (str_starts_with($digits, '8')) {
+            $digits = '62' . $digits;
         }
-
-        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'phone' => $phone,
+            'phone' => $digits,
             'password' => $request->password,
             'role' => 'jamaah',
-            'otp_code' => $otp,
-            'otp_expires_at' => Carbon::now()->addMinutes(5),
         ]);
 
-        $this->whatsapp->sendOtp($phone, $otp);
+        Auth::login($user);
+        $request->session()->regenerate();
 
-        session(['otp_user_id' => $user->id]);
-
-        return redirect()->route('otp.verify')->with('success', 'Kode OTP telah dikirim ke WhatsApp Anda.');
+        return redirect()->route('jamaah.dashboard')
+            ->with('success', 'Pendaftaran akun berhasil! Selamat datang di PT. Zein Internasional, ' . $user->name . '.');
     }
 }

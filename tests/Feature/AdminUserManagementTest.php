@@ -34,7 +34,6 @@ class AdminUserManagementTest extends TestCase
             'phone' => '6282121483337',
             'role' => 'admin',
             'password' => Hash::make('admin123'),
-            'phone_verified_at' => now(),
         ]);
 
         // 2. Akun Jamaah 1 (Terverifikasi & Punya Pendaftaran)
@@ -44,7 +43,6 @@ class AdminUserManagementTest extends TestCase
             'phone' => '6281234567890',
             'role' => 'jamaah',
             'password' => Hash::make('password123'),
-            'phone_verified_at' => now(),
             'gender' => 'laki-laki',
             'birth_place' => 'Bandung',
             'birth_date' => '1990-01-01',
@@ -58,7 +56,6 @@ class AdminUserManagementTest extends TestCase
             'phone' => '6281399887766',
             'role' => 'jamaah',
             'password' => Hash::make('password123'),
-            'phone_verified_at' => null,
         ]);
     }
 

@@ -3,9 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
+use App\Models\DocumentType;
 use App\Models\DocumentVerificationHistory;
+use App\Models\JamaahDocument;
+use App\Models\Package;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
+use App\Services\BookingStatusService;
 use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,16 +45,34 @@ class RegistrationController extends Controller
             $query->where('status', $status);
         }
 
+        // Filter berdasarkan Phase dokumen (Tahap Awal vs Tahap Keberangkatan)
+        if ($phase = $request->input('phase')) {
+            if ($phase === 'awal') {
+                $query->where('status', Registration::STATUS_MENUNGGU_VERIFIKASI_DOKUMEN);
+            } elseif ($phase === 'keberangkatan') {
+                $query->whereIn('status', [
+                    Registration::STATUS_MENUNGGU_KELENGKAPAN_KEBERANGKATAN,
+                    Registration::STATUS_BERANGKAT,
+                ]);
+            }
+        }
+
         $registrations = $query->paginate(10)->withQueryString();
 
         return view('admin.registrations.index', [
             'registrations' => $registrations,
+            'currentPhase' => $request->input('phase'),
             'totalRegistrations' => Registration::where('status', '!=', Registration::STATUS_DIBATALKAN)
                 ->where(function ($cq) {
                     $cq->whereNull('cancellation_status')
                        ->orWhere('cancellation_status', '!=', \App\Models\RegistrationCancellation::STATUS_APPROVED);
                 })->count(),
             'pendingDocsCount' => Registration::where('status', Registration::STATUS_MENUNGGU_VERIFIKASI_DOKUMEN)
+                ->where(function ($cq) {
+                    $cq->whereNull('cancellation_status')
+                       ->orWhere('cancellation_status', '!=', \App\Models\RegistrationCancellation::STATUS_APPROVED);
+                })->count(),
+            'pendingDepartureDocsCount' => Registration::where('status', Registration::STATUS_MENUNGGU_KELENGKAPAN_KEBERANGKATAN)
                 ->where(function ($cq) {
                     $cq->whereNull('cancellation_status')
                        ->orWhere('cancellation_status', '!=', \App\Models\RegistrationCancellation::STATUS_APPROVED);
@@ -63,26 +86,36 @@ class RegistrationController extends Controller
                 Registration::STATUS_JAMAAH,
                 Registration::STATUS_CICILAN_PELUNASAN,
                 Registration::STATUS_LUNAS,
+                Registration::STATUS_MENUNGGU_KELENGKAPAN_KEBERANGKATAN,
                 Registration::STATUS_BERANGKAT
             ])->where(function ($cq) {
                 $cq->whereNull('cancellation_status')
-                   ->orWhere('cancellation_status', '!=', \App\Models\RegistrationCancellation::STATUS_APPROVED);
+                    ->orWhere('cancellation_status', '!=', \App\Models\RegistrationCancellation::STATUS_APPROVED);
             })->count(),
         ]);
     }
 
     /**
-     * Detail pendaftaran jamaah & verifikasi dokumen.
+     * Detail pendaftaran jamaah & verifikasi dokumen (Tahap Awal & Tahap Keberangkatan).
      * PRD Section 6.6
      */
-    public function show(Registration $registration)
+    public function show(Registration $registration, BookingStatusService $bookingStatusService)
     {
-        $registration->load(['user', 'package', 'members', 'invoice', 'payments']);
+        $registration->load([
+            'user',
+            'package',
+            'packageVariant',
+            'members.documents.documentType',
+            'invoice',
+            'payments'
+        ]);
 
         $totalMembers = $registration->members->count();
         $approvedMembers = $registration->members->where('document_status', RegistrationMember::DOC_STATUS_DISETUJUI)->count();
         $rejectedMembers = $registration->members->where('document_status', RegistrationMember::DOC_STATUS_DITOLAK)->count();
         $pendingMembers = $registration->members->where('document_status', RegistrationMember::DOC_STATUS_MENUNGGU_VERIFIKASI)->count();
+
+        $departureSummary = $bookingStatusService->getDepartureDocumentsSummary($registration);
 
         return view('admin.registrations.show', [
             'registration' => $registration,
@@ -90,6 +123,7 @@ class RegistrationController extends Controller
             'approvedMembers' => $approvedMembers,
             'rejectedMembers' => $rejectedMembers,
             'pendingMembers' => $pendingMembers,
+            'departureSummary' => $departureSummary,
         ]);
     }
 
@@ -350,5 +384,191 @@ class RegistrationController extends Controller
         }
 
         return back()->with('success', 'Dokumen fisik berhasil dihapus dari storage.');
+    }
+
+    /**
+     * Admin: Verifikasi Dokumen Keberangkatan (Visa Umrah, Vaksin Meningitis, Foto Visa).
+     */
+    public function verifyDepartureDocument(Request $request, JamaahDocument $document, BookingStatusService $bookingStatusService)
+    {
+        $request->validate([
+            'action' => ['required', 'in:approve,reject'],
+            'rejection_reason' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'action.required' => 'Aksi verifikasi harus ditentukan.',
+            'action.in' => 'Aksi verifikasi tidak valid.',
+            'rejection_reason.max' => 'Alasan penolakan maksimal 1000 karakter.',
+        ]);
+
+        if ($request->action === 'reject') {
+            $request->validate([
+                'rejection_reason' => ['required', 'string', 'min:5', 'max:1000'],
+            ], [
+                'rejection_reason.required' => 'Alasan penolakan dokumen keberangkatan wajib diisi.',
+                'rejection_reason.min' => 'Alasan penolakan minimal 5 karakter.',
+                'rejection_reason.max' => 'Alasan penolakan maksimal 1000 karakter.',
+            ]);
+        }
+
+        $admin = $request->user();
+        $member = $document->member;
+        $registration = $member->registration;
+        $docType = $document->documentType;
+
+        // GUARD 1: Pendaftaran berstatus Selesai (arsip) atau Dibatalkan tidak boleh dimutasi lagi
+        if (in_array($registration->status, [Registration::STATUS_SELESAI, Registration::STATUS_DIBATALKAN], true)) {
+            abort(422, 'Pendaftaran telah berstatus ' . $registration->status_label . ' dan tidak dapat diverifikasi lagi.');
+        }
+
+        // GUARD 2: Dokumen yang SUDAH VALID terkunci dan tidak dapat ditolak/dibatalkan
+        // KECUALI status pendaftaran saat ini adalah 'berangkat' (mode koreksi darurat)
+        if ($request->action === 'reject' && $document->status === JamaahDocument::STATUS_VALID) {
+            if ($registration->status !== Registration::STATUS_BERANGKAT) {
+                abort(422, 'Dokumen yang sudah valid terkunci dan tidak dapat dibatalkan/ditolak karena status pendaftaran belum mencapai "Siap Berangkat".');
+            }
+        }
+
+        return DB::transaction(function () use ($document, $request, $admin, $member, $registration, $docType, $bookingStatusService) {
+            $lockedDoc = JamaahDocument::where('id', $document->id)->lockForUpdate()->firstOrFail();
+
+            // Double check guard inside lock
+            if ($request->action === 'reject' && $lockedDoc->status === JamaahDocument::STATUS_VALID) {
+                if ($registration->status !== Registration::STATUS_BERANGKAT) {
+                    abort(422, 'Dokumen yang sudah valid terkunci dan tidak dapat dibatalkan/ditolak karena status pendaftaran belum mencapai "Siap Berangkat".');
+                }
+            }
+
+            if ($request->action === 'approve') {
+                $lockedDoc->update([
+                    'status' => JamaahDocument::STATUS_VALID,
+                    'rejection_reason' => null,
+                    'verified_by' => $admin->id,
+                    'verified_at' => now(),
+                ]);
+
+                // Simpan history audit
+                DocumentVerificationHistory::create([
+                    'registration_member_id' => $member->id,
+                    'status' => RegistrationMember::DOC_STATUS_DISETUJUI,
+                    'reason' => "Dokumen keberangkatan {$docType->name} disetujui oleh Admin.",
+                    'action_by' => $admin->id,
+                    'created_at' => now(),
+                ]);
+
+                // Evaluasi apakah seluruh dokumen keberangkatan wajib sudah lengkap
+                $bookingStatusService->evaluateStatus($registration);
+                $registration->refresh();
+
+                $msg = $registration->status === Registration::STATUS_BERANGKAT
+                    ? "Dokumen {$docType->name} untuk {$member->name} disetujui. Seluruh dokumen keberangkatan jamaah telah LENGKAP & VALID! Status pendaftaran otomatis diperbarui menjadi 'Siap Berangkat'."
+                    : "Dokumen {$docType->name} untuk {$member->name} berhasil disetujui.";
+
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json(['success' => true, 'message' => $msg]);
+                }
+
+                return back()->with('success', $msg);
+            } else {
+                $wasValid = $lockedDoc->status === JamaahDocument::STATUS_VALID;
+
+                $lockedDoc->update([
+                    'status' => JamaahDocument::STATUS_DITOLAK,
+                    'rejection_reason' => trim($request->rejection_reason),
+                    'verified_by' => $admin->id,
+                    'verified_at' => now(),
+                ]);
+
+                // Simpan history audit
+                DocumentVerificationHistory::create([
+                    'registration_member_id' => $member->id,
+                    'status' => RegistrationMember::DOC_STATUS_DITOLAK,
+                    'reason' => ($wasValid ? "Koreksi darurat: " : "") . "Dokumen keberangkatan {$docType->name} ditolak: " . trim($request->rejection_reason),
+                    'action_by' => $admin->id,
+                    'created_at' => now(),
+                ]);
+
+                // Jika status pendaftaran tadinya berangkat, kembalikan ke menunggu_kelengkapan_keberangkatan
+                if ($registration->status === Registration::STATUS_BERANGKAT) {
+                    $registration->update([
+                        'status' => Registration::STATUS_MENUNGGU_KELENGKAPAN_KEBERANGKATAN,
+                    ]);
+                }
+
+                $msg = $wasValid
+                    ? "Dokumen {$docType->name} untuk {$member->name} berhasil dibatalkan (koreksi). Status pendaftaran dikembalikan ke 'Kelengkapan Dokumen Keberangkatan'."
+                    : "Dokumen {$docType->name} untuk {$member->name} ditolak. Catatan perbaikan telah dicatat.";
+
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json(['success' => true, 'message' => $msg]);
+                }
+
+                return back()->with('success', $msg);
+            }
+        });
+    }
+
+    /**
+     * Admin: Tandai pendaftaran individual sebagai Selesai (Tahap 9).
+     * Rule: Hanya boleh berpindah dari status 'berangkat' ke 'selesai'.
+     */
+    public function markCompleted(Request $request, Registration $registration)
+    {
+        if ($registration->status !== Registration::STATUS_BERANGKAT) {
+            return back()->with('error', 'Hanya pendaftaran yang berstatus "Siap Berangkat" yang dapat ditandai selesai.');
+        }
+
+        $admin = $request->user();
+
+        DB::transaction(function () use ($registration, $admin) {
+            $registration->update([
+                'status' => Registration::STATUS_SELESAI,
+            ]);
+
+            AuditLog::record(
+                action: AuditLog::ACTION_MARK_COMPLETED_INDIVIDUAL,
+                description: "Admin {$admin->name} menandai pendaftaran {$registration->registration_number} (Jamaah: {$registration->user->name}) sebagai Selesai.",
+                auditable: $registration,
+                user: $admin
+            );
+        });
+
+        return back()->with('success', "Pendaftaran {$registration->registration_number} berhasil ditandai sebagai Selesai.");
+    }
+
+    /**
+     * Admin: Tandai semua peserta keberangkatan paket sebagai Selesai (Bulk Action).
+     * Rule: Mengubah seluruh pendaftaran berstatus 'berangkat' pada paket/keberangkatan ini menjadi 'selesai'.
+     */
+    public function completeDeparture(Request $request, Package $package)
+    {
+        $admin = $request->user();
+
+        return DB::transaction(function () use ($package, $admin) {
+            $registrations = $package->registrations()
+                ->where('status', Registration::STATUS_BERANGKAT)
+                ->lockForUpdate()
+                ->get();
+
+            if ($registrations->isEmpty()) {
+                return back()->with('warning', "Tidak ada peserta dengan status 'Siap Berangkat' pada jadwal paket/keberangkatan '{$package->name}'.");
+            }
+
+            $count = 0;
+            foreach ($registrations as $registration) {
+                $registration->update([
+                    'status' => Registration::STATUS_SELESAI,
+                ]);
+                $count++;
+            }
+
+            AuditLog::record(
+                action: AuditLog::ACTION_MARK_COMPLETED_BULK,
+                description: "Admin {$admin->name} menandai {$count} pendaftaran peserta pada keberangkatan '{$package->name}' sebagai Selesai.",
+                auditable: $package,
+                user: $admin
+            );
+
+            return back()->with('success', "Sebanyak {$count} peserta keberangkatan paket '{$package->name}' berhasil ditandai sebagai Selesai.");
+        });
     }
 }

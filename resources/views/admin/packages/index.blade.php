@@ -7,11 +7,13 @@
                 this.itemToDelete = id;
                 this.itemNameToDelete = name;
                 this.deleteModalOpen = true;
+                document.body.classList.add('overflow-hidden');
             },
             closeDeleteModal() {
                 this.deleteModalOpen = false;
                 this.itemToDelete = null;
                 this.itemNameToDelete = '';
+                document.body.classList.remove('overflow-hidden');
             }
         }" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -44,20 +46,6 @@
                 </div>
             </div>
         </div>
-
-        @if(session('success'))
-        <div class="mb-6 p-4 bg-[#EFF3EB] border border-[#E0E7DC] rounded-xl text-[#1B3B2B] text-sm flex items-center" style="animation: fadeSlideUp 0.4s ease both; animation-delay: 0.1s;">
-            <svg class="w-5 h-5 mr-2 text-[#1B3B2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            {{ session('success') }}
-        </div>
-        @endif
-
-        @if(session('error'))
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center" style="animation: fadeSlideUp 0.4s ease both; animation-delay: 0.1s;">
-            <svg class="w-5 h-5 mr-2 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            {{ session('error') }}
-        </div>
-        @endif
 
         <!-- Filter & Table Card -->
         <div class="bg-white rounded-2xl border border-[#E0E7DC] shadow-xs overflow-hidden" style="animation: fadeSlideUp 0.4s ease both; animation-delay: 0.15s;">
@@ -153,22 +141,29 @@
             @endif
         </div>
 
-        <!-- Delete Modal -->
-        <div x-show="deleteModalOpen" 
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="fixed inset-0 z-50 overflow-y-auto" 
-             style="display: none;"
-             @keydown.escape.window="closeDeleteModal()">
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-[#122B1F]/60 backdrop-blur-xs" @click="closeDeleteModal()"></div>
+        <!-- Delete Modal (Fixed Viewport Overlay) -->
+        <template x-teleport="body">
+            <div x-show="deleteModalOpen" 
+                 x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" 
+                 style="display: none;"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="modal-title"
+                 @keydown.escape.window="closeDeleteModal()">
 
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+                {{-- Backdrop Overlay --}}
+                <div x-show="deleteModalOpen"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 bg-[#122B1F]/60 backdrop-blur-xs transition-opacity" 
+                     @click="closeDeleteModal()"></div>
 
+                {{-- Modal Card --}}
                 <div x-show="deleteModalOpen" 
                      x-transition:enter="ease-out duration-300" 
                      x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
@@ -176,12 +171,12 @@
                      x-transition:leave="ease-in duration-200" 
                      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
                      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
-                     class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-[#E0E7DC] relative z-10"
+                     class="relative w-full sm:max-w-lg bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all border border-[#E0E7DC] z-10 my-auto"
                      @click.outside="closeDeleteModal()">
                     
                     <div class="bg-white px-6 pt-6 pb-5">
                         <div class="sm:flex sm:items-start gap-4">
-                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-2xl bg-red-100 text-red-600 sm:mx-0">
                                 <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
@@ -192,7 +187,7 @@
                                     <p class="text-sm text-[#526057]">
                                         Apakah Anda yakin ingin menghapus paket <span x-text="'\"' + itemNameToDelete + '\"'" class="font-bold text-[#122B1F]"></span>?
                                     </p>
-                                    <p class="text-xs text-red-600 mt-2 bg-red-50 p-2.5 rounded-lg border border-red-100">
+                                    <p class="text-xs text-red-600 mt-2 bg-red-50 p-2.5 rounded-xl border border-red-100">
                                         Perhatian: Semua data sub-paket (VIP/Bisnis/Ekonomi), harga, fasilitas, dan foto terkait akan ikut terhapus secara permanen.
                                     </p>
                                 </div>
@@ -204,7 +199,7 @@
                         <form :action="'{{ url('admin/packages') }}/' + itemToDelete" method="POST" class="inline-block w-full sm:w-auto">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="w-full inline-flex justify-center items-center rounded-xl px-5 py-2.5 bg-red-600 text-xs font-bold text-white hover:bg-red-700 focus:outline-none transition-colors shadow-sm cursor-pointer">
+                            <button type="submit" class="w-full inline-flex justify-center items-center rounded-xl px-5 py-2.5 bg-red-600 text-xs font-bold text-white hover:bg-red-700 focus:outline-none transition-colors shadow-xs cursor-pointer">
                                 Ya, Hapus Paket Ini
                             </button>
                         </form>
@@ -214,6 +209,6 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </template>
     </div>
 </x-layouts.admin>

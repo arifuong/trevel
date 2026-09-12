@@ -35,7 +35,6 @@ class RandomRegistrationNumberTest extends TestCase
             'role' => 'jamaah',
             'email' => 'jamaah.test@zeintour.com',
             'phone' => '6281234567890',
-            'phone_verified_at' => now(),
         ]);
 
         $this->package = Package::create([

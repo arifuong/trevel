@@ -25,7 +25,6 @@ class PackagePhotoUploadTest extends TestCase
 
         $this->admin = User::factory()->create([
             'role' => 'admin',
-            'phone_verified_at' => now(),
         ]);
     }
 
@@ -39,6 +38,7 @@ class PackagePhotoUploadTest extends TestCase
             'duration' => 12,
             'description' => 'Paket umroh 12 hari.',
             'status' => 'aktif',
+            'package_type' => 'umrah',
             'main_photo' => $mainPhoto,
         ]);
 
@@ -61,6 +61,7 @@ class PackagePhotoUploadTest extends TestCase
             'departure_date' => now()->addMonths(2)->format('Y-m-d'),
             'duration' => 12,
             'status' => 'aktif',
+            'package_type' => 'umrah',
             'main_photo' => $pdfFile,
         ]);
 

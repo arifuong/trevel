@@ -901,6 +901,7 @@
     </section>
 
     @push('scripts')
+    @vite(['resources/js/ocr.js'])
     <script>
         function registrationForm(packagesList, initialPackageId, initialVariantId, initialRoomType, userName) {
             return {

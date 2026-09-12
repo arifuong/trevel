@@ -1,6 +1,16 @@
 <x-layouts.admin :title="'Detail Jamaah — ' . $user->name . ' — PT. Zein Internasional'">
 
-    <div x-data="{ deleteModalOpen: false }" class="max-w-5xl mx-auto space-y-6 sm:space-y-8">
+    <div x-data="{ 
+            deleteModalOpen: false,
+            openDeleteModal() {
+                this.deleteModalOpen = true;
+                document.body.classList.add('overflow-hidden');
+            },
+            closeDeleteModal() {
+                this.deleteModalOpen = false;
+                document.body.classList.remove('overflow-hidden');
+            }
+        }" class="max-w-5xl mx-auto space-y-6 sm:space-y-8">
         
         {{-- Header & Navigasi Kembali --}}
         <div class="flex items-center justify-between gap-4">
@@ -13,7 +23,7 @@
             </a>
             @if($user->role === 'jamaah')
             <button type="button" 
-                    @click="deleteModalOpen = true"
+                    @click="openDeleteModal()"
                     class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all shadow-2xs cursor-pointer">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -40,16 +50,10 @@
 
                 <div class="flex-grow space-y-2">
                     <div class="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-                        @if($user->phone_verified_at)
-                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-3 py-0.5 rounded-full border border-emerald-200">
-                                <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                Akun Terverifikasi WhatsApp
-                            </span>
-                        @else
-                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-100 px-3 py-0.5 rounded-full border border-amber-200">
-                                Belum Verifikasi OTP
-                            </span>
-                        @endif
+                        <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-3 py-0.5 rounded-full border border-emerald-200">
+                            <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            Akun Aktif
+                        </span>
 
                         @if($activeRegistration)
                             <span class="inline-flex items-center gap-1 text-[11px] font-bold text-[#1B3B2B] bg-[#EFF3EB] px-3 py-0.5 rounded-full border border-[#CCD8C7]">
@@ -552,22 +556,29 @@
             </div>
         @endif
 
-        {{-- Modal Konfirmasi Hapus Jamaah --}}
-        <div x-show="deleteModalOpen" 
-             x-transition:enter="ease-out duration-300" 
-             x-transition:enter-start="opacity-0" 
-             x-transition:enter-end="opacity-100" 
-             x-transition:leave="ease-in duration-200" 
-             x-transition:leave-start="opacity-100" 
-             x-transition:leave-end="opacity-0" 
-             class="fixed inset-0 z-50 overflow-y-auto" 
-             style="display: none;"
-             @keydown.escape.window="deleteModalOpen = false">
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-[#122B1F]/60 backdrop-blur-xs" @click="deleteModalOpen = false"></div>
+        {{-- Modal Konfirmasi Hapus Jamaah (Fixed Viewport Overlay) --}}
+        <template x-teleport="body">
+            <div x-show="deleteModalOpen" 
+                 x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" 
+                 style="display: none;"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="modal-user-title"
+                 @keydown.escape.window="closeDeleteModal()">
 
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+                {{-- Backdrop --}}
+                <div x-show="deleteModalOpen"
+                     x-transition:enter="ease-out duration-300" 
+                     x-transition:enter-start="opacity-0" 
+                     x-transition:enter-end="opacity-100" 
+                     x-transition:leave="ease-in duration-200" 
+                     x-transition:leave-start="opacity-100" 
+                     x-transition:leave-end="opacity-0" 
+                     class="fixed inset-0 bg-[#122B1F]/60 backdrop-blur-xs transition-opacity" 
+                     @click="closeDeleteModal()"></div>
 
+                {{-- Modal Card --}}
                 <div x-show="deleteModalOpen" 
                      x-transition:enter="ease-out duration-300" 
                      x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
@@ -575,20 +586,20 @@
                      x-transition:leave="ease-in duration-200" 
                      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
                      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
-                     class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-[#E0E7DC] relative z-10"
-                     @click.outside="deleteModalOpen = false">
+                     class="relative w-full sm:max-w-lg bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all border border-[#E0E7DC] z-10 my-auto"
+                     @click.outside="closeDeleteModal()">
                     <div class="bg-white px-6 pt-6 pb-5">
                         <div class="sm:flex sm:items-start gap-4">
-                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-2xl bg-red-100 text-red-600 sm:mx-0">
                                 <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                             </div>
                             <div class="mt-3 text-center sm:mt-0 sm:text-left flex-1">
-                                <h3 class="text-lg font-bold text-[#122B1F]">Hapus Akun Jamaah?</h3>
+                                <h3 class="text-lg font-bold text-[#122B1F]" id="modal-user-title">Hapus Akun Jamaah?</h3>
                                 <div class="mt-2">
                                     <p class="text-sm text-[#526057]">
-                                        Apakah Anda yakin ingin menghapus akun jamaah <span class="font-bold text-[#122B1F]">"{{ $user->name }}"</span> ({{ $user->phone_formatted }})?
+                                        Apakah Anda yakin ingin menghapus akun jamaah <span class="font-bold text-[#12271E]">"{{ $user->name }}"</span> ({{ $user->phone_formatted }})?
                                     </p>
                                     <p class="text-xs text-red-600 mt-2 bg-red-50 p-2.5 rounded-lg border border-red-100">
                                         Perhatian: Seluruh data pendaftaran, berkas dokumen (KTP, KK, Paspor), dan riwayat setoran pembayaran milik akun ini akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
@@ -601,17 +612,17 @@
                         <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline-block w-full sm:w-auto">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="w-full inline-flex justify-center items-center rounded-xl px-5 py-2.5 bg-red-600 text-xs font-bold text-white hover:bg-red-700 focus:outline-none transition-colors shadow-sm cursor-pointer">
+                            <button type="submit" class="w-full inline-flex justify-center items-center rounded-xl px-5 py-2.5 bg-red-600 text-xs font-bold text-white hover:bg-red-700 focus:outline-none transition-colors shadow-xs cursor-pointer">
                                 Ya, Hapus Akun Jamaah
                             </button>
                         </form>
-                        <button type="button" @click="deleteModalOpen = false" class="mt-3 sm:mt-0 w-full inline-flex justify-center items-center rounded-xl border border-[#E0E7DC] bg-white px-5 py-2.5 text-xs font-semibold text-[#122B1F] hover:bg-[#F8FAF7] focus:outline-none transition-colors cursor-pointer">
+                        <button type="button" @click="closeDeleteModal()" class="mt-3 sm:mt-0 w-full inline-flex justify-center items-center rounded-xl border border-[#E0E7DC] bg-white px-5 py-2.5 text-xs font-semibold text-[#122B1F] hover:bg-[#F8FAF7] focus:outline-none transition-colors cursor-pointer">
                             Batal
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
+        </template>
 
     </div>
 

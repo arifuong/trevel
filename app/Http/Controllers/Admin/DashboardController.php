@@ -23,12 +23,15 @@ class DashboardController extends Controller
         // 1. Metrik Utama
         $totalJamaah = User::where('role', 'jamaah')->count();
         
-        // Total Pendaftaran Aktif (tidak termasuk yang dibatalkan / approved cancellation)
-        $totalPendaftaran = Registration::where('status', '!=', Registration::STATUS_DIBATALKAN)
+        // Total Pendaftaran Aktif (tidak termasuk yang dibatalkan / selesai / approved cancellation)
+        $totalPendaftaran = Registration::whereNotIn('status', [Registration::STATUS_DIBATALKAN, Registration::STATUS_SELESAI])
             ->where(function ($cq) {
                 $cq->whereNull('cancellation_status')
                    ->orWhere('cancellation_status', '!=', RegistrationCancellation::STATUS_APPROVED);
             })->count();
+
+        // Total Selesai Berangkat / Ibadah (Tahap 9)
+        $totalSelesai = Registration::where('status', Registration::STATUS_SELESAI)->count();
 
         $totalPaketAktif = Package::where('status', Package::STATUS_AKTIF)->count();
         
@@ -128,6 +131,7 @@ class DashboardController extends Controller
         return view('admin.dashboard', [
             'totalJamaah' => $totalJamaah,
             'totalPendaftaran' => $totalPendaftaran,
+            'totalSelesai' => $totalSelesai,
             'totalPaketAktif' => $totalPaketAktif,
             'totalIncome' => $totalIncome,
             'totalOutstanding' => $totalOutstanding,

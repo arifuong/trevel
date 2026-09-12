@@ -21,8 +21,15 @@ class Registration extends Model
     public const STATUS_JAMAAH = 'jamaah';
     public const STATUS_CICILAN_PELUNASAN = 'cicilan_pelunasan';
     public const STATUS_LUNAS = 'lunas';
+    public const STATUS_MENUNGGU_KELENGKAPAN_KEBERANGKATAN = 'menunggu_kelengkapan_keberangkatan';
     public const STATUS_BERANGKAT = 'berangkat';
+    public const STATUS_SELESAI = 'selesai';
     public const STATUS_DIBATALKAN = 'dibatalkan';
+
+    /**
+     * Total tahapan alur persiapan ibadah (Single Source of Truth).
+     */
+    public const TOTAL_STEPS = 9;
 
     protected $fillable = [
         'user_id',
@@ -37,6 +44,8 @@ class Registration extends Model
     protected $appends = [
         'status_label',
         'step_number',
+        'total_steps',
+        'progress_percentage',
         'registration_number',
     ];
 
@@ -112,7 +121,9 @@ class Registration extends Model
                 self::STATUS_JAMAAH => 'Sudah Terdaftar Resmi',
                 self::STATUS_CICILAN_PELUNASAN => 'Proses Pelunasan',
                 self::STATUS_LUNAS => 'Lunas',
+                self::STATUS_MENUNGGU_KELENGKAPAN_KEBERANGKATAN => 'Kelengkapan Dokumen Keberangkatan',
                 self::STATUS_BERANGKAT => 'Siap Berangkat',
+                self::STATUS_SELESAI => 'Selesai',
                 self::STATUS_DIBATALKAN => 'Dibatalkan',
                 default => ucwords(str_replace('_', ' ', $this->status)),
             }
@@ -120,7 +131,7 @@ class Registration extends Model
     }
 
     /**
-     * Step index (1-7) untuk indikator alur PRD Section 11.
+     * Step index (1-9) untuk indikator alur PRD & Alur 9 Tahap Persiapan Ibadah.
      */
     protected function stepNumber(): Attribute
     {
@@ -132,9 +143,50 @@ class Registration extends Model
                 self::STATUS_JAMAAH => 4,
                 self::STATUS_CICILAN_PELUNASAN => 5,
                 self::STATUS_LUNAS => 6,
-                self::STATUS_BERANGKAT => 7,
+                self::STATUS_MENUNGGU_KELENGKAPAN_KEBERANGKATAN => 7,
+                self::STATUS_BERANGKAT => 8,
+                self::STATUS_SELESAI => 9,
                 self::STATUS_DIBATALKAN => 0,
                 default => 1,
+            }
+        );
+    }
+
+    /**
+     * Dapatkan total tahapan alur persiapan ibadah secara statis (Single Source of Truth).
+     */
+    public static function totalSteps(): int
+    {
+        return self::TOTAL_STEPS;
+    }
+
+    /**
+     * Accessor total_steps untuk model Registration.
+     */
+    public function getTotalStepsAttribute(): int
+    {
+        return self::TOTAL_STEPS;
+    }
+
+    /**
+     * Persentase progress persiapan ibadah (0 - 100%) dengan batasan matematis aman.
+     * Tidak akan pernah bernilai lebih dari 100% atau kurang dari 0%.
+     */
+    protected function progressPercentage(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->status === self::STATUS_DIBATALKAN) {
+                    return 0;
+                }
+
+                $step = (int) $this->step_number;
+                if ($step <= 0) {
+                    return 0;
+                }
+
+                $percentage = (int) round(($step / self::TOTAL_STEPS) * 100);
+                return min(100, max(0, $percentage));
             }
         );
     }
@@ -144,7 +196,15 @@ class Registration extends Model
      */
     public function isActive(): bool
     {
-        return !in_array($this->status, [self::STATUS_BERANGKAT, self::STATUS_DIBATALKAN]);
+        return !in_array($this->status, [self::STATUS_BERANGKAT, self::STATUS_SELESAI, self::STATUS_DIBATALKAN]);
+    }
+
+    /**
+     * Apakah perjalanan ibadah telah selesai (Tahap 9).
+     */
+    public function isCompleted(): bool
+    {
+        return $this->status === self::STATUS_SELESAI;
     }
 
     /**

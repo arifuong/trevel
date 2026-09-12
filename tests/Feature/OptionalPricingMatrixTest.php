@@ -25,12 +25,10 @@ class OptionalPricingMatrixTest extends TestCase
 
         $this->admin = User::factory()->create([
             'role' => 'admin',
-            'phone_verified_at' => now(),
         ]);
 
         $this->jamaah = User::factory()->create([
             'role' => 'jamaah',
-            'phone_verified_at' => now(),
         ]);
     }
 

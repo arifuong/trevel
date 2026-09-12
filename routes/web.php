@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\OtpVerificationController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Jamaah\DashboardController as JamaahDashboardController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -30,17 +29,21 @@ Route::get('/galeri', [LandingController::class, 'galeri'])->name('galeri');
 Route::get('/kontak', [LandingController::class, 'kontak'])->name('kontak');
 
 // ═══════════════════════════════════════════════════════
+// Delivery Gambar Publik On-Demand & Cache WebP
+// ═══════════════════════════════════════════════════════
+Route::get('/img/{path}', [\App\Http\Controllers\ImageDeliveryController::class, 'deliver'])
+    ->where('path', '.*')
+    ->middleware('throttle:120,1')
+    ->name('images.deliver');
+
+
+// ═══════════════════════════════════════════════════════
 // Auth Jamaah (PRD Section 6.1: Registrasi & Login)
 // ═══════════════════════════════════════════════════════
 Route::middleware('guest')->group(function () {
     // Registrasi
     Route::get('/daftar', [RegisterController::class, 'showForm'])->name('register');
     Route::post('/daftar', [RegisterController::class, 'register']);
-
-    // Verifikasi OTP WhatsApp
-    Route::get('/verifikasi-otp', [OtpVerificationController::class, 'showForm'])->name('otp.verify');
-    Route::post('/verifikasi-otp', [OtpVerificationController::class, 'verify']);
-    Route::post('/kirim-ulang-otp', [OtpVerificationController::class, 'resend'])->name('otp.resend');
 
     // Login Jamaah
     Route::get('/login', [LoginController::class, 'showForm'])->name('login');
@@ -51,7 +54,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 // ═══════════════════════════════════════════════════════
-// Area Jamaah (Protected: role jamaah + OTP verified)
+// Area Jamaah (Protected: role jamaah)
 // ═══════════════════════════════════════════════════════
 Route::middleware(['auth', 'jamaah'])->group(function () {
     // PRD: Halaman "Status Pendaftaran Saya" (/my-registration)
@@ -77,6 +80,7 @@ Route::middleware(['auth', 'jamaah'])->group(function () {
 
         // Penggantian / Re-upload Dokumen Jamaah
         Route::post('/members/{member}/documents', [\App\Http\Controllers\Jamaah\RegistrationController::class, 'updateMemberDocument'])->name('members.documents.update');
+        Route::post('/members/{member}/departure-documents/{documentType}', [\App\Http\Controllers\Jamaah\RegistrationController::class, 'uploadDepartureDocument'])->name('members.departure-documents.upload');
 
         // Profil Jamaah
         Route::get('/profil', [\App\Http\Controllers\Jamaah\ProfileController::class, 'show'])->name('profile');
@@ -114,8 +118,14 @@ Route::prefix('admin')->group(function () {
         Route::get('packages/{package}/variants/{variant}/edit', [\App\Http\Controllers\Admin\PackageVariantController::class, 'edit'])->name('admin.packages.variants.edit');
         Route::put('packages/{package}/variants/{variant}', [\App\Http\Controllers\Admin\PackageVariantController::class, 'update'])->name('admin.packages.variants.update');
         Route::delete('packages/{package}/variants/{variant}', [\App\Http\Controllers\Admin\PackageVariantController::class, 'destroy'])->name('admin.packages.variants.destroy');
-        Route::post('packages/{package}/variants/{variant}/upload-photos', [\App\Http\Controllers\Admin\PackageVariantController::class, 'uploadPhotos'])->name('admin.packages.variants.upload-photos');
-        Route::delete('packages/{package}/variants/{variant}/hotel-photos/{photo}', [\App\Http\Controllers\Admin\PackageVariantController::class, 'deleteHotelPhoto'])->name('admin.packages.variants.hotel-photos.destroy');
+
+        // ── Master Data: Hotel ──
+        Route::resource('hotels', \App\Http\Controllers\Admin\HotelController::class)->names('admin.hotels');
+        Route::get('api/hotels/search', [\App\Http\Controllers\Admin\HotelController::class, 'search'])->name('admin.api.hotels.search');
+
+        // ── Master Data: Maskapai ──
+        Route::resource('airlines', \App\Http\Controllers\Admin\AirlineController::class)->names('admin.airlines');
+        Route::get('api/airlines/search', [\App\Http\Controllers\Admin\AirlineController::class, 'search'])->name('admin.api.airlines.search');
 
         // Manajemen User / Jamaah
         Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('admin.users.index');
@@ -129,6 +139,13 @@ Route::prefix('admin')->group(function () {
         Route::post('/members/{member}/verify', [\App\Http\Controllers\Admin\RegistrationController::class, 'verifyMember'])->name('admin.members.verify');
         Route::post('/members/{member}/documents', [\App\Http\Controllers\Admin\RegistrationController::class, 'updateMemberDocument'])->name('admin.members.documents.update');
         Route::delete('/members/{member}/documents/{documentType}', [\App\Http\Controllers\Admin\RegistrationController::class, 'deleteMemberDocument'])->name('admin.members.documents.delete');
+        Route::post('/jamaah-documents/{document}/verify', [\App\Http\Controllers\Admin\RegistrationController::class, 'verifyDepartureDocument'])->name('admin.documents.verify');
+        Route::post('/registrations/{registration}/complete', [\App\Http\Controllers\Admin\RegistrationController::class, 'markCompleted'])->name('admin.registrations.complete');
+        Route::post('/departures/{package}/complete', [\App\Http\Controllers\Admin\RegistrationController::class, 'completeDeparture'])->name('admin.departures.complete');
+        Route::post('/packages/{package}/complete-participants', [\App\Http\Controllers\Admin\RegistrationController::class, 'completeDeparture'])->name('admin.packages.complete-participants');
+        Route::get('/departures/{package}', function(\App\Models\Package $package) {
+            return redirect()->route('admin.packages.show', $package);
+        })->name('admin.departures.show');
 
         // PRD Section 6.7: Verifikasi Pembayaran
         Route::get('/payments', [\App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('admin.payments.index');
@@ -137,6 +154,9 @@ Route::prefix('admin')->group(function () {
         // PRD Section 6.10: Validasi Pembatalan Jamaah
         Route::get('/cancellations', [\App\Http\Controllers\Admin\CancellationController::class, 'index'])->name('admin.cancellations.index');
         Route::post('/cancellations/{cancellation}/verify', [\App\Http\Controllers\Admin\CancellationController::class, 'verify'])->name('admin.cancellations.verify');
+
+        // ── Galeri Media (Foto & Video) ──
+        Route::resource('galleries', \App\Http\Controllers\Admin\GalleryController::class)->names('admin.galleries');
     });
 });
 
@@ -146,7 +166,9 @@ Route::prefix('admin')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/documents/invoice/{registration}', [\App\Http\Controllers\DocumentController::class, 'invoice'])->name('documents.invoice');
     Route::get('/documents/invoice/{registration}/download', [\App\Http\Controllers\DocumentController::class, 'downloadInvoice'])->name('documents.invoice.download');
+    Route::get('/documents/invoice/{registration}/pdf', [\App\Http\Controllers\DocumentController::class, 'downloadInvoicePdf'])->name('documents.invoice.pdf');
     Route::get('/documents/receipt/{payment}', [\App\Http\Controllers\DocumentController::class, 'receipt'])->name('documents.receipt');
     Route::get('/documents/receipt/{payment}/download', [\App\Http\Controllers\DocumentController::class, 'downloadReceipt'])->name('documents.receipt.download');
+    Route::get('/documents/receipt/{payment}/pdf', [\App\Http\Controllers\DocumentController::class, 'downloadReceiptPdf'])->name('documents.receipt.pdf');
 });
 

@@ -31,15 +31,11 @@ class User extends Authenticatable
         'address',
         'password',
         'role',
-        'phone_verified_at',
-        'otp_code',
-        'otp_expires_at',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
-        'otp_code',
     ];
 
     protected $appends = [
@@ -52,8 +48,6 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'phone_verified_at' => 'datetime',
-            'otp_expires_at' => 'datetime',
             'birth_date' => 'date:Y-m-d',
             'password' => 'hashed',
         ];
@@ -175,12 +169,12 @@ class User extends Authenticatable
     }
 
     /**
-     * Dapatkan pendaftaran yang sedang aktif (belum berangkat dan belum dibatalkan).
+     * Dapatkan pendaftaran yang sedang aktif (belum berangkat, belum selesai, dan belum dibatalkan).
      */
     public function activeRegistration(): ?Registration
     {
         return $this->registrations()
-            ->whereNotIn('status', ['berangkat', 'dibatalkan'])
+            ->whereNotIn('status', ['berangkat', 'selesai', 'dibatalkan'])
             ->latest('id')
             ->first();
     }

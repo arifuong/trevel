@@ -22,7 +22,6 @@ class NikKkValidationTest extends TestCase
 
         $this->jamaah = User::factory()->create([
             'role' => 'jamaah',
-            'phone_verified_at' => now(),
         ]);
 
         $this->package = Package::create([

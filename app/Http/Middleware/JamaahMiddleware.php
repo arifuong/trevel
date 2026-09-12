@@ -22,16 +22,6 @@ class JamaahMiddleware
                 ->with('error', 'Silakan login sebagai jamaah.');
         }
 
-        if (!$request->user()->phone_verified_at) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Akun belum diverifikasi OTP.'], 403);
-            }
-
-            session(['otp_user_id' => $request->user()->id]);
-            return redirect()->route('otp.verify')
-                ->with('warning', 'Akun belum diverifikasi. Silakan verifikasi OTP.');
-        }
-
         return $next($request);
     }
 }

@@ -237,4 +237,35 @@ class RegistrationMember extends Model
     {
         return $this->hasMany(DocumentVerificationHistory::class);
     }
+
+    /**
+     * Seluruh dokumen yang diunggah anggota jamaah (baik tahap awal maupun keberangkatan).
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(JamaahDocument::class, 'registration_member_id');
+    }
+
+    /**
+     * Dokumen tahap keberangkatan untuk anggota jamaah ini.
+     */
+    public function departureDocuments(): HasMany
+    {
+        return $this->hasMany(JamaahDocument::class, 'registration_member_id')
+            ->whereHas('documentType', function ($query) {
+                $query->where('phase', DocumentType::PHASE_KEBERANGKATAN);
+            });
+    }
+
+    /**
+     * Ambil dokumen keberangkatan berdasarkan kode (VISA, VAKSIN_MENINGITIS, FOTO_VISA).
+     */
+    public function getDocumentByCode(string $code): ?JamaahDocument
+    {
+        if ($this->relationLoaded('documents')) {
+            return $this->documents->first(fn($d) => $d->documentType && $d->documentType->code === $code);
+        }
+
+        return $this->documents()->whereHas('documentType', fn($q) => $q->where('code', $code))->first();
+    }
 }

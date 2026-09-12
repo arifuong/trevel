@@ -13,11 +13,23 @@
             this.previewTitle = title;
             this.isPdf = url.toLowerCase().endsWith('.pdf');
             this.previewModal = true;
+            document.body.classList.add('overflow-hidden');
+        },
+        closePreview() {
+            this.previewModal = false;
+            if (!this.rejectModal) {
+                document.body.classList.remove('overflow-hidden');
+            }
         },
         openReject(url, desc) {
             this.rejectUrl = url;
             this.paymentDesc = desc;
             this.rejectModal = true;
+            document.body.classList.add('overflow-hidden');
+        },
+        closeReject() {
+            this.rejectModal = false;
+            document.body.classList.remove('overflow-hidden');
         }
     }">
 
@@ -207,6 +219,11 @@
                                                 <svg class="w-3.5 h-3.5 text-[#1B3B2B]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                                 <span>Lihat Kwitansi</span>
                                             </a>
+                                            <a href="{{ route('documents.receipt.pdf', $payment) }}" 
+                                               title="Unduh File PDF Kwitansi Resmi"
+                                               class="inline-flex items-center justify-center p-1.5 rounded-xl text-red-800 bg-red-50 hover:bg-red-100 border border-red-300 transition-all shadow-2xs">
+                                                <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                                            </a>
                                             <a href="{{ route('documents.receipt.download', $payment) }}" 
                                                title="Unduh File Excel Kwitansi Resmi"
                                                class="inline-flex items-center justify-center p-1.5 rounded-xl text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-all shadow-2xs">
@@ -237,105 +254,141 @@
             @endif
         </div>
 
-        {{-- Preview Modal --}}
-        <div x-show="previewModal" 
-             x-cloak
-             class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             style="display: none;">
-            
-            <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
-                 @click.away="previewModal = false">
+        {{-- Preview Modal (Fixed Viewport Overlay) --}}
+        <template x-teleport="body">
+            <div x-show="previewModal" 
+                 x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+                 @keydown.escape.window="closePreview()"
+                 style="display: none;"
+                 role="dialog"
+                 aria-modal="true">
                 
-                <div class="px-6 py-4 bg-[#1B3B2B] text-white flex items-center justify-between">
-                    <h3 class="text-sm sm:text-base font-bold truncate" x-text="previewTitle"></h3>
+                {{-- Backdrop --}}
+                <div x-show="previewModal"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+                     @click="closePreview()"></div>
+
+                {{-- Modal Card --}}
+                <div x-show="previewModal"
+                     x-transition:enter="ease-out duration-300" 
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave="ease-in duration-200" 
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     class="relative bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden z-10 my-auto"
+                     @click.outside="closePreview()">
+                    
+                    <div class="px-6 py-4 bg-[#1B3B2B] text-white flex items-center justify-between">
+                        <h3 class="text-sm sm:text-base font-bold truncate" x-text="previewTitle"></h3>
+                        <div class="flex items-center gap-3">
+                            <a :href="previewUrl" target="_blank" download class="text-xs text-white/80 hover:text-white underline">
+                                Buka File Asli
+                            </a>
+                            <button type="button" @click="closePreview()" class="text-white/80 hover:text-white p-1 cursor-pointer">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-4 flex-1 overflow-auto flex items-center justify-center bg-zinc-900 min-h-[400px]">
+                        <template x-if="!isPdf">
+                            <img :src="previewUrl" :alt="previewTitle" class="max-h-[70vh] max-w-full object-contain rounded-lg shadow-md">
+                        </template>
+                        <template x-if="isPdf">
+                            <iframe :src="previewUrl" class="w-full h-[70vh] rounded-lg bg-white"></iframe>
+                        </template>
+                    </div>
+
+                    <div class="px-6 py-3 bg-white border-t border-[#E0E7DC] flex justify-end">
+                        <button type="button" @click="closePreview()" 
+                                class="px-5 py-2 rounded-xl bg-[#1B3B2B] text-white text-xs font-semibold hover:bg-[#132E22] transition-colors cursor-pointer">
+                            Tutup Pratinjau
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </template>
+
+        {{-- Reject Modal (Fixed Viewport Overlay) --}}
+        <template x-teleport="body">
+            <div x-show="rejectModal" 
+                 x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+                 @keydown.escape.window="closeReject()"
+                 style="display: none;"
+                 role="dialog"
+                 aria-modal="true">
+                
+                {{-- Backdrop --}}
+                <div x-show="rejectModal"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 bg-[#122B1F]/60 backdrop-blur-xs transition-opacity"
+                     @click="closeReject()"></div>
+
+                {{-- Modal Card --}}
+                <div x-show="rejectModal"
+                     x-transition:enter="ease-out duration-300" 
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave="ease-in duration-200" 
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     class="relative bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-[#E0E7DC] z-10 my-auto"
+                     @click.outside="closeReject()">
+                    
                     <div class="flex items-center gap-3">
-                        <a :href="previewUrl" target="_blank" download class="text-xs text-white/80 hover:text-white underline">
-                            Buka File Asli
-                        </a>
-                        <button type="button" @click="previewModal = false" class="text-white/80 hover:text-white p-1 cursor-pointer">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
+                        <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-[#12271E]">Tolak Bukti Pembayaran</h3>
+                            <p class="text-xs text-[#526057]" x-text="paymentDesc"></p>
+                        </div>
                     </div>
-                </div>
 
-                <div class="p-4 flex-1 overflow-auto flex items-center justify-center bg-zinc-900 min-h-[400px]">
-                    <template x-if="!isPdf">
-                        <img :src="previewUrl" :alt="previewTitle" class="max-h-[70vh] max-w-full object-contain rounded-lg shadow-md">
-                    </template>
-                    <template x-if="isPdf">
-                        <iframe :src="previewUrl" class="w-full h-[70vh] rounded-lg bg-white"></iframe>
-                    </template>
-                </div>
+                    <form :action="rejectUrl" method="POST" class="space-y-4"
+                          @submit="if(!$refs.reasonInput.value.trim()){ alert('Alasan penolakan bukti pembayaran wajib diisi.'); $event.preventDefault(); }">
+                        @csrf
+                        <input type="hidden" name="action" value="reject">
 
-                <div class="px-6 py-3 bg-white border-t border-[#E0E7DC] flex justify-end">
-                    <button type="button" @click="previewModal = false" 
-                            class="px-5 py-2 rounded-xl bg-[#1B3B2B] text-white text-xs font-semibold hover:bg-[#132E22] transition-colors cursor-pointer">
-                        Tutup Pratinjau
-                    </button>
-                </div>
+                        <div>
+                            <label for="rejection_reason" class="block text-[11px] font-semibold text-[#4D5E54] uppercase tracking-wider mb-1.5">
+                                Alasan Penolakan <span class="text-red-500">*</span>
+                            </label>
+                            <textarea id="rejection_reason" name="rejection_reason" x-ref="reasonInput" rows="4" required
+                                      class="w-full px-3.5 py-2.5 rounded-xl border border-[#E0E7DC] text-xs sm:text-sm text-[#12271E] placeholder-[#526057]/50 focus:outline-none focus:ring-2 focus:ring-red-400/20 focus:border-red-400"
+                                      placeholder="Contoh: Nominal transfer pada struk tidak sesuai dengan jumlah tagihan. Silakan kirimkan bukti transfer yang valid."></textarea>
+                        </div>
 
+                        <div class="flex items-center justify-end gap-3 pt-2 border-t border-[#E0E7DC]">
+                            <button type="button" @click="closeReject()" 
+                                    class="px-4 py-2.5 rounded-xl border border-[#E0E7DC] text-xs font-semibold text-[#526057] hover:bg-[#EFF3EB] transition-colors cursor-pointer">
+                                Batal
+                            </button>
+                            <button type="submit" 
+                                    class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer">
+                                Kirim Penolakan
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
             </div>
-        </div>
-
-        {{-- Reject Modal --}}
-        <div x-show="rejectModal" 
-             x-cloak
-             class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             style="display: none;">
-            
-            <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-[#E0E7DC]"
-                 @click.away="rejectModal = false">
-                
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                    </div>
-                    <div>
-                        <h3 class="text-base font-bold text-[#12271E]">Tolak Bukti Pembayaran</h3>
-                        <p class="text-xs text-[#526057]" x-text="paymentDesc"></p>
-                    </div>
-                </div>
-
-                <form :action="rejectUrl" method="POST" class="space-y-4"
-                      @submit="if(!$refs.reasonInput.value.trim()){ alert('Alasan penolakan bukti pembayaran wajib diisi.'); $event.preventDefault(); }">
-                    @csrf
-                    <input type="hidden" name="action" value="reject">
-
-                    <div>
-                        <label for="rejection_reason" class="block text-[11px] font-semibold text-[#4D5E54] uppercase tracking-wider mb-1.5">
-                            Alasan Penolakan <span class="text-red-500">*</span>
-                        </label>
-                        <textarea id="rejection_reason" name="rejection_reason" x-ref="reasonInput" rows="4" required
-                                  class="w-full px-3.5 py-2.5 rounded-xl border border-[#E0E7DC] text-xs sm:text-sm text-[#12271E] placeholder-[#526057]/50 focus:outline-none focus:ring-2 focus:ring-red-400/20 focus:border-red-400"
-                                  placeholder="Contoh: Nominal transfer pada struk tidak sesuai dengan jumlah tagihan. Silakan kirimkan bukti transfer yang valid."></textarea>
-                    </div>
-
-                    <div class="flex items-center justify-end gap-3 pt-2 border-t border-[#E0E7DC]">
-                        <button type="button" @click="rejectModal = false" 
-                                class="px-4 py-2.5 rounded-xl border border-[#E0E7DC] text-xs font-semibold text-[#526057] hover:bg-[#EFF3EB] transition-colors cursor-pointer">
-                            Batal
-                        </button>
-                        <button type="submit" 
-                                class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer">
-                            Kirim Penolakan
-                        </button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
+        </template>
 
     </div>
 

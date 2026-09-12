@@ -24,7 +24,7 @@
         }
     @endphp
 
-    @if(!empty($compiledCssContent))
+    @if(!empty($compiledCssContent) && !app()->runningUnitTests())
         <style>{!! $compiledCssContent !!}</style>
     @else
         @vite(['resources/css/app.css'])
@@ -60,22 +60,25 @@
          HEADER ATAS LAYAR DESKTOP & TABLET
          ═══════════════════════════════════════════════════════════════ --}}
     <header class="bg-[#1B3B2B] text-white shadow-sm sticky top-0 z-40 border-b border-white/10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
+        <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
                 
                 {{-- Logo & Identitas Portal --}}
-                <div class="flex items-center gap-6">
-                    <a href="{{ route('home') }}" class="flex items-center gap-3 group focus:outline-none" aria-label="Kembali ke Beranda Zein Tour">
+                <div class="flex items-center gap-2 sm:gap-6 min-w-0">
+                    <a href="{{ route('home') }}" class="flex items-center gap-2 sm:gap-3 group focus:outline-none shrink-0" aria-label="Kembali ke Beranda Zein Tour">
                         <img src="{{ asset('images/logo-zein.webp') }}" 
                              alt="Logo Zein Tour" 
-                             class="h-8 sm:h-9 w-auto brightness-0 invert object-contain" 
-                             width="120" 
-                             height="36">
+                             class="h-7 sm:h-9 w-auto brightness-0 invert object-contain" 
+                             width="110" 
+                             height="32">
                         <div class="hidden sm:block border-l border-white/20 pl-3">
                             <span class="text-xs font-bold tracking-tight text-white block leading-none">Portal Jamaah</span>
                             <span class="text-[10px] text-emerald-300/80 block leading-none mt-0.5 font-medium">PT. Zein Internasional</span>
                         </div>
                     </a>
+                    <span class="sm:hidden text-[9px] uppercase font-bold tracking-wider text-emerald-300 bg-white/10 px-1.5 py-0.5 rounded border border-white/10 shrink-0">
+                        Jamaah
+                    </span>
 
                     {{-- Menu Navigasi Layar Komputer --}}
                     <nav class="hidden md:flex items-center space-x-1 pl-3 border-l border-white/10 text-xs">
@@ -105,27 +108,41 @@
                     </nav>
                 </div>
 
-                {{-- Profil & Tombol Keluar --}}
-                <div class="flex items-center gap-3">
+                {{-- Profil & Tombol Aksi --}}
+                <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
                     @php $currentUser = auth()->user(); @endphp
+
+                    {{-- User Profile Pill (Mobile & Desktop) --}}
                     <a href="{{ route('jamaah.profile') }}" 
                        title="Buka Profil Saya"
-                       class="hidden sm:flex items-center gap-2.5 bg-white/10 hover:bg-white/20 rounded-full py-1 pl-1.5 pr-3.5 border border-white/10 transition-all">
-                        <div class="w-7 h-7 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-300/30 flex items-center justify-center font-bold text-xs overflow-hidden">
+                       class="flex items-center gap-1.5 sm:gap-2.5 bg-white/10 hover:bg-white/20 rounded-full py-1 pl-1 sm:pl-1.5 pr-2.5 sm:pr-3.5 border border-white/10 transition-all">
+                        <div class="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-300/30 flex items-center justify-center font-bold text-[10px] sm:text-xs overflow-hidden shrink-0">
                             @if($currentUser?->avatar_url)
                                 <img src="{{ $currentUser->avatar_url }}" alt="{{ $currentUser->name }}" class="w-full h-full object-cover">
                             @else
                                 {{ $currentUser?->initials ?? 'J' }}
                             @endif
                         </div>
-                        <span class="text-xs font-semibold text-white truncate max-w-[130px]">{{ $currentUser?->name ?? 'Jamaah' }}</span>
+                        <span class="text-[11px] sm:text-xs font-semibold text-white truncate max-w-[65px] sm:max-w-[130px]">
+                            {{ explode(' ', $currentUser?->name ?? 'Jamaah')[0] }}
+                        </span>
                     </a>
 
+                    {{-- Tombol Bantuan WA Cepat Mobile --}}
+                    <a href="https://wa.me/6281222222562?text=Assalamu%27alaikum%20Zein%20Tour,%20saya%20jamaah%20membutuhkan%20bantuan" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       title="Hubungi Bantuan CS"
+                       class="p-2 text-white/70 hover:text-emerald-300 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.84-.84 5.97 5.97 0 001.057-3.035C4.606 15.688 4 13.928 4 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
+                    </a>
+
+                    {{-- Logout --}}
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
                         <button type="submit" 
                                 title="Keluar dari Akun"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white/80 bg-white/10 hover:bg-red-500/20 hover:text-red-200 hover:border-red-400/40 border border-white/10 transition-all cursor-pointer">
+                                class="inline-flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-full text-xs font-semibold text-white/80 bg-white/10 hover:bg-red-500/20 hover:text-red-200 hover:border-red-400/40 border border-white/10 transition-all cursor-pointer">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg>
                             <span class="hidden sm:inline">Keluar</span>
                         </button>

@@ -18,7 +18,6 @@ class OcrControllerTest extends TestCase
 
         $this->jamaah = User::factory()->create([
             'role' => 'jamaah',
-            'phone_verified_at' => now(),
         ]);
     }
 

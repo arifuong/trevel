@@ -38,7 +38,6 @@ class DocumentVerificationTest extends TestCase
             'email' => 'admin@zeintour.com',
             'role' => 'admin',
             'password' => Hash::make('admin123'),
-            'phone_verified_at' => now(),
         ]);
 
         // 2. Setup Jamaah 1 (Owner of registration)
@@ -48,7 +47,6 @@ class DocumentVerificationTest extends TestCase
             'phone' => '6281234567890',
             'role' => 'jamaah',
             'password' => Hash::make('password123'),
-            'phone_verified_at' => now(),
         ]);
 
         // 3. Setup Jamaah 2 (Other user)
@@ -58,7 +56,6 @@ class DocumentVerificationTest extends TestCase
             'phone' => '6289876543210',
             'role' => 'jamaah',
             'password' => Hash::make('password123'),
-            'phone_verified_at' => now(),
         ]);
 
         // 4. Setup Package
@@ -616,7 +613,6 @@ class DocumentVerificationTest extends TestCase
     {
         $user = \App\Models\User::factory()->create([
             'role' => 'jamaah',
-            'phone_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->post(route('jamaah.registration.store'), [

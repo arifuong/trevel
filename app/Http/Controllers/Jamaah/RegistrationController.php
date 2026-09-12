@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Jamaah;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRegistrationRequest;
+use App\Models\DocumentType;
 use App\Models\DocumentVerificationHistory;
 use App\Models\Invoice;
+use App\Models\JamaahDocument;
 use App\Models\Package;
 use App\Models\PackageVariant;
 use App\Models\Registration;
 use App\Models\RegistrationMember;
+use App\Services\BookingStatusService;
 use App\Services\ImageUploadService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -227,18 +230,34 @@ class RegistrationController extends Controller
      * Halaman "Status Pendaftaran Saya" (/my-registration).
      * PRD Section 11: Menampilkan indikator tahapan (step indicator) dan detail pendaftaran.
      */
-    public function show(Request $request)
+    public function show(Request $request, BookingStatusService $bookingStatusService)
     {
         $user = $request->user();
         
         $registration = $user->registrations()
-            ->with(['package', 'members', 'invoice', 'payments', 'latestCancellation'])
+            ->with([
+                'package',
+                'packageVariant',
+                'members.documents.documentType',
+                'invoice',
+                'payments',
+                'latestCancellation'
+            ])
             ->latest()
             ->first();
+
+        $departureSummary = null;
+        if ($registration) {
+            // Sinkronisasi status booking jika sudah lunas
+            $bookingStatusService->evaluateStatus($registration);
+            $registration->refresh();
+            $departureSummary = $bookingStatusService->getDepartureDocumentsSummary($registration);
+        }
 
         return view('jamaah.registration.status', [
             'user' => $user,
             'registration' => $registration,
+            'departureSummary' => $departureSummary,
         ]);
     }
 
@@ -426,5 +445,113 @@ class RegistrationController extends Controller
         });
 
         return back()->with('success', 'Seluruh data identitas dan dokumen persyaratan berhasil diajukan ulang! Pengajuan dokumen ' . $member->name . ' kini kembali berstatus Menunggu Verifikasi.');
+    }
+
+    /**
+     * Jamaah: Unggah / Ganti Dokumen Tahap Keberangkatan (Visa Umrah, Vaksin Meningitis, Foto Visa).
+     */
+    public function uploadDepartureDocument(Request $request, RegistrationMember $member, DocumentType $documentType, BookingStatusService $bookingStatusService)
+    {
+        $user = $request->user();
+
+        // Validasi otorisasi kepemilikan
+        if ($member->registration->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses untuk mengunggah dokumen anggota ini.');
+        }
+
+        // Pastikan dokumen adalah dokumen tahap keberangkatan
+        if (!$documentType->isDeparturePhase()) {
+            return back()->with('error', 'Jenis dokumen ini bukan dokumen tahap keberangkatan.');
+        }
+
+        // Cek dokumen existing
+        $existingDoc = JamaahDocument::where('registration_member_id', $member->id)
+            ->where('document_type_id', $documentType->id)
+            ->first();
+
+        if ($existingDoc && $existingDoc->isValid()) {
+            return back()->with('warning', "Dokumen {$documentType->name} untuk {$member->name} sudah diverifikasi dan valid, tidak perlu diunggah ulang.");
+        }
+
+        if ($existingDoc && $existingDoc->isPending()) {
+            return back()->with('warning', "Dokumen {$documentType->name} untuk {$member->name} sedang dalam proses verifikasi oleh admin.");
+        }
+
+        // Aturan validasi file
+        $isPhoto = ($documentType->code === DocumentType::CODE_FOTO_VISA);
+        $mimesRule = $isPhoto ? 'mimes:jpg,jpeg,png,webp' : 'mimes:jpg,jpeg,png,webp,pdf';
+
+        $request->validate([
+            'file' => ['required', 'file', $mimesRule, 'max:10240'],
+        ], [
+            'file.required' => "File {$documentType->name} wajib dipilih.",
+            'file.mimes' => $isPhoto
+                ? 'Format file foto visa harus berformat JPG, JPEG, PNG, atau WEBP.'
+                : 'Format file harus JPG, JPEG, PNG, WEBP, atau PDF.',
+            'file.max' => 'Ukuran file dokumen maksimal 10 MB.',
+        ]);
+
+        $file = $request->file('file');
+        $directory = 'documents/departure/' . strtolower($documentType->code);
+
+        DB::beginTransaction();
+        try {
+            $uploadedPath = null;
+            $extension = strtolower($file->getClientOriginalExtension());
+
+            if ($extension === 'pdf') {
+                // PDF disimpan langsung ke storage public
+                $fileName = time() . '_' . \Illuminate\Support\Str::random(12) . '.' . $extension;
+                $uploadedPath = $file->storeAs($directory, $fileName, 'public');
+
+                // Hapus file lama jika ada
+                if ($existingDoc && $existingDoc->file_path) {
+                    $this->imageUploadService->deleteFile($existingDoc->file_path);
+                }
+            } else {
+                // Gambar dikompresi melalui ImageUploadService (yang otomatis menghapus file lama jika ada)
+                $uploadedPath = $this->imageUploadService->replaceFile(
+                    oldPath: $existingDoc?->file_path,
+                    newFile: $file,
+                    directory: $directory,
+                    type: 'document'
+                );
+            }
+
+            JamaahDocument::updateOrCreate(
+                [
+                    'registration_member_id' => $member->id,
+                    'document_type_id' => $documentType->id,
+                ],
+                [
+                    'file_path' => $uploadedPath,
+                    'status' => JamaahDocument::STATUS_MENUNGGU_VERIFIKASI,
+                    'rejection_reason' => null,
+                    'verified_by' => null,
+                    'verified_at' => null,
+                ]
+            );
+
+            // Simpan audit history
+            DocumentVerificationHistory::create([
+                'registration_member_id' => $member->id,
+                'status' => RegistrationMember::DOC_STATUS_MENUNGGU_VERIFIKASI,
+                'reason' => ($existingDoc && $existingDoc->isRejected())
+                    ? "Jamaah mengunggah ulang berkas perbaikan keberangkatan: {$documentType->name}"
+                    : "Jamaah mengunggah berkas keberangkatan: {$documentType->name}",
+                'action_by' => $user->id,
+                'created_at' => now(),
+            ]);
+
+            DB::commit();
+
+            // Evaluasi status booking melalui BookingStatusService
+            $bookingStatusService->evaluateStatus($member->registration);
+
+            return back()->with('success', "Dokumen {$documentType->name} untuk {$member->name} berhasil diunggah dan sedang menunggu verifikasi admin.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan saat mengunggah dokumen: ' . $e->getMessage());
+        }
     }
 }

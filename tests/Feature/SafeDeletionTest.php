@@ -27,12 +27,10 @@ class SafeDeletionTest extends TestCase
 
         $this->admin = User::factory()->create([
             'role' => 'admin',
-            'phone_verified_at' => now(),
         ]);
 
         $this->jamaah = User::factory()->create([
             'role' => 'jamaah',
-            'phone_verified_at' => now(),
         ]);
     }
 
@@ -45,7 +43,6 @@ class SafeDeletionTest extends TestCase
         $userToDelete = User::factory()->create([
             'name' => 'Jamaah Baru',
             'role' => 'jamaah',
-            'phone_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($this->admin)->delete(route('admin.users.destroy', $userToDelete));

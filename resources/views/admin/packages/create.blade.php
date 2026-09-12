@@ -57,6 +57,21 @@
                             </div>
 
                             <div class="col-span-2 md:col-span-1">
+                                <label for="package_type" class="block text-sm font-medium text-[#122B1F] mb-1">Jenis Paket <span class="text-red-500">*</span></label>
+                                <select id="package_type" name="package_type" class="w-full rounded-xl border border-[#E0E7DC] text-sm px-4 py-2.5 focus:ring-[#1B3B2B] focus:border-[#1B3B2B] outline-none transition-colors bg-white">
+                                    <option value="umrah" {{ old('package_type', 'umrah') == 'umrah' ? 'selected' : '' }}>Umrah</option>
+                                    <option value="haji" {{ old('package_type') == 'haji' ? 'selected' : '' }}>Haji</option>
+                                </select>
+                            </div>
+
+                            <div class="col-span-2 md:col-span-1">
+                                <label for="category_label" class="block text-sm font-medium text-[#122B1F] mb-1">Label Kategori (Opsional)</label>
+                                <input type="text" id="category_label" name="category_label" value="{{ old('category_label') }}" placeholder="Contoh: Umrah Kemerdekaan, Haji Mujamalah"
+                                    class="w-full rounded-xl border border-[#E0E7DC] text-sm px-4 py-2.5 focus:ring-[#1B3B2B] focus:border-[#1B3B2B] outline-none transition-colors">
+                                <p class="text-[11px] text-[#526057] mt-1">Akan ditampilkan sebagai badge kategori di kartu paket. Jika kosong, otomatis "Umrah Reguler" / "Haji Khusus".</p>
+                            </div>
+
+                            <div class="col-span-2 md:col-span-1">
                                 <label for="duration" class="block text-sm font-medium text-[#122B1F] mb-1">Durasi (Hari) <span class="text-red-500">*</span></label>
                                 <div class="relative">
                                     <input type="number" id="duration" name="duration" value="{{ old('duration') }}" required min="1"
@@ -117,10 +132,68 @@
                                             </label>
                                         </div>
                                         <p class="text-xs text-[#526057]">PNG, JPG, WEBP maks 5MB</p>
+                                        <p class="text-[11px] text-amber-600 mt-1 flex items-start gap-1">
+                                            <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                                            <span>Gunakan foto bersih (landmark/hotel) <strong>tanpa</strong> teks tanggal/harga tercetak.</span>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
 
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6 space-y-6">
+                    <!-- Include/Exclude Sections -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" x-data="{
+                        includes: ['Tiket Pesawat PP', 'Visa Umrah', 'Hotel Makkah & Madinah', 'Makan 3x Sehari', 'Handling Bandara'],
+                        excludes: ['Pembuatan Paspor', 'Vaksin Meningitis & Polio', 'Pengeluaran Pribadi (Laundry/Telepon)', 'Kelebihan Bagasi']
+                    }">
+                        <!-- Biaya Termasuk -->
+                        <div class="bg-[#F8FAF7] rounded-xl border border-[#E0E7DC] p-5">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-[11px] font-semibold text-[#4D5E54] uppercase tracking-wider">Biaya Termasuk (Include)</h3>
+                                <button type="button" @click="includes.push('')" class="text-xs text-[#1B3B2B] hover:text-[#122B1F] font-semibold flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                    Tambah
+                                </button>
+                            </div>
+                            <p class="text-xs text-[#526057] mb-3">Berlaku untuk <strong>semua sub-paket</strong>. Override per tier bisa di form sub-paket.</p>
+                            <div class="space-y-2">
+                                <template x-for="(item, index) in includes" :key="index">
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" name="includes[]" x-model="includes[index]" placeholder="Contoh: Tiket Pesawat PP"
+                                               class="flex-1 rounded-xl border border-[#E0E7DC] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B3B2B]/20 focus:border-[#1B3B2B] transition-colors">
+                                        <button type="button" @click="includes.splice(index, 1)" class="p-1.5 text-red-400 hover:text-red-600">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Biaya Tidak Termasuk -->
+                        <div class="bg-[#F8FAF7] rounded-xl border border-[#E0E7DC] p-5">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-[11px] font-semibold text-[#4D5E54] uppercase tracking-wider">Biaya Tidak Termasuk (Exclude)</h3>
+                                <button type="button" @click="excludes.push('')" class="text-xs text-[#1B3B2B] hover:text-[#122B1F] font-semibold flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                    Tambah
+                                </button>
+                            </div>
+                            <p class="text-xs text-[#526057] mb-3">Berlaku untuk <strong>semua sub-paket</strong>.</p>
+                            <div class="space-y-2">
+                                <template x-for="(item, index) in excludes" :key="index">
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" name="excludes[]" x-model="excludes[index]" placeholder="Contoh: Pembuatan Paspor"
+                                               class="flex-1 rounded-xl border border-[#E0E7DC] text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B3B2B]/20 focus:border-[#1B3B2B] transition-colors">
+                                        <button type="button" @click="excludes.splice(index, 1)" class="p-1.5 text-red-400 hover:text-red-600">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
                 </div>

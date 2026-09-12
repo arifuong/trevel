@@ -25,7 +25,6 @@ class PackageEditZeroResetTest extends TestCase
 
         $this->admin = User::factory()->create([
             'role' => 'admin',
-            'phone_verified_at' => now(),
         ]);
     }
 

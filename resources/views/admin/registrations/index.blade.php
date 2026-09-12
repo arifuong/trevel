@@ -9,7 +9,7 @@
     </div>
 
     {{-- Kartu Ringkasan Status --}}
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6" style="animation: fadeSlideUp 0.4s ease 0.05s both">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6" style="animation: fadeSlideUp 0.4s ease 0.05s both">
         <div class="bg-white rounded-xl border border-[#E0E7DC] p-4 flex items-center justify-between shadow-2xs">
             <div>
                 <span class="text-[11px] text-[#526057] block font-medium">Total Pendaftaran</span>
@@ -22,7 +22,7 @@
 
         <div class="bg-white rounded-xl border border-amber-200 p-4 flex items-center justify-between shadow-2xs">
             <div>
-                <span class="text-[11px] text-amber-800 block font-semibold">Menunggu Verifikasi</span>
+                <span class="text-[11px] text-amber-800 block font-semibold">Verifikasi Tahap Awal</span>
                 <span class="text-xl font-bold text-amber-900 mt-0.5 block">{{ $pendingDocsCount }}</span>
             </div>
             <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
@@ -30,9 +30,19 @@
             </div>
         </div>
 
+        <div class="bg-white rounded-xl border border-purple-200 p-4 flex items-center justify-between shadow-2xs">
+            <div>
+                <span class="text-[11px] text-purple-800 block font-semibold">Dokumen Keberangkatan</span>
+                <span class="text-xl font-bold text-purple-900 mt-0.5 block">{{ $pendingDepartureDocsCount ?? 0 }}</span>
+            </div>
+            <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+        </div>
+
         <div class="bg-white rounded-xl border border-blue-200 p-4 flex items-center justify-between shadow-2xs">
             <div>
-                <span class="text-[11px] text-blue-800 block font-semibold">Menunggu Pembayaran DP</span>
+                <span class="text-[11px] text-blue-800 block font-semibold">Menunggu Bayar DP</span>
                 <span class="text-xl font-bold text-blue-900 mt-0.5 block">{{ $pendingPaymentCount }}</span>
             </div>
             <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
@@ -42,7 +52,7 @@
 
         <div class="bg-white rounded-xl border border-emerald-200 p-4 flex items-center justify-between shadow-2xs">
             <div>
-                <span class="text-[11px] text-emerald-800 block font-semibold">Jamaah Terdaftar / Lunas</span>
+                <span class="text-[11px] text-emerald-800 block font-semibold">Jamaah Lunas / Berangkat</span>
                 <span class="text-xl font-bold text-emerald-900 mt-0.5 block">{{ $verifiedJamaahCount }}</span>
             </div>
             <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
@@ -53,9 +63,38 @@
 
     {{-- Filter & Pencarian --}}
     <div class="bg-white rounded-2xl border border-[#E0E7DC] shadow-xs mb-6 overflow-hidden" style="animation: fadeSlideUp 0.4s ease 0.1s both">
+        {{-- Phase Quick Filter Tabs --}}
+        <div class="flex items-center gap-1 p-2 bg-[#F8FAF7] border-b border-[#E0E7DC] overflow-x-auto text-xs font-semibold">
+            <a href="{{ route('admin.registrations.index', array_merge(request()->except('phase', 'page'), [])) }}"
+               class="px-3.5 py-1.5 rounded-xl transition-all {{ !request('phase') ? 'bg-[#1B3B2B] text-white shadow-xs' : 'text-[#526057] hover:bg-[#EFF3EB]' }}">
+                Semua Tahap
+            </a>
+            <a href="{{ route('admin.registrations.index', array_merge(request()->except('phase', 'page'), ['phase' => 'awal'])) }}"
+               class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 {{ request('phase') === 'awal' ? 'bg-[#1B3B2B] text-white shadow-xs' : 'text-[#526057] hover:bg-[#EFF3EB]' }}">
+                <span>Tahap 1: Verifikasi Awal</span>
+                @if($pendingDocsCount > 0)
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ request('phase') === 'awal' ? 'bg-amber-400 text-amber-950 font-bold' : 'bg-amber-100 text-amber-800' }}">
+                        {{ $pendingDocsCount }}
+                    </span>
+                @endif
+            </a>
+            <a href="{{ route('admin.registrations.index', array_merge(request()->except('phase', 'page'), ['phase' => 'keberangkatan'])) }}"
+               class="px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 {{ request('phase') === 'keberangkatan' ? 'bg-[#1B3B2B] text-white shadow-xs' : 'text-[#526057] hover:bg-[#EFF3EB]' }}">
+                <span>Tahap 7: Dokumen Keberangkatan (Visa & Vaksin)</span>
+                @if(($pendingDepartureDocsCount ?? 0) > 0)
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ request('phase') === 'keberangkatan' ? 'bg-purple-400 text-purple-950 font-bold' : 'bg-purple-100 text-purple-800' }}">
+                        {{ $pendingDepartureDocsCount }}
+                    </span>
+                @endif
+            </a>
+        </div>
+
         <div class="p-4 sm:p-5">
             <form method="GET" action="{{ route('admin.registrations.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-                
+                @if(request('phase'))
+                    <input type="hidden" name="phase" value="{{ request('phase') }}">
+                @endif
+
                 {{-- Search --}}
                 <div class="sm:col-span-6 relative">
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama jamaah, email, nomor HP, atau nama paket..."
@@ -74,7 +113,9 @@
                         <option value="jamaah" {{ request('status') === 'jamaah' ? 'selected' : '' }}>Sudah Terdaftar Resmi</option>
                         <option value="cicilan_pelunasan" {{ request('status') === 'cicilan_pelunasan' ? 'selected' : '' }}>Proses Pelunasan</option>
                         <option value="lunas" {{ request('status') === 'lunas' ? 'selected' : '' }}>Lunas</option>
+                        <option value="menunggu_kelengkapan_keberangkatan" {{ request('status') === 'menunggu_kelengkapan_keberangkatan' ? 'selected' : '' }}>Kelengkapan Dokumen Keberangkatan</option>
                         <option value="berangkat" {{ request('status') === 'berangkat' ? 'selected' : '' }}>Siap Berangkat</option>
+                        <option value="selesai" {{ request('status') === 'selesai' ? 'selected' : '' }}>Selesai</option>
                         <option value="dibatalkan" {{ request('status') === 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                     </select>
                 </div>
@@ -87,8 +128,8 @@
                     </button>
                     @if(request('search') || request('status'))
                         <a href="{{ route('admin.registrations.index') }}" 
-                           class="p-2.5 rounded-xl border border-[#E0E7DC] text-[#526057] hover:text-[#12271E] hover:bg-[#EFF3EB] transition-colors"
-                           title="Reset filter">
+                            class="p-2.5 rounded-xl border border-[#E0E7DC] text-[#526057] hover:text-[#12271E] hover:bg-[#EFF3EB] transition-colors"
+                            title="Reset filter">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                         </a>
                     @endif
@@ -127,7 +168,7 @@
                                 <div class="text-[11px] text-[#526057] mt-0.5">{{ $reg->user->phone }}</div>
                             </td>
                             <td class="py-4 px-4">
-                                <div class="font-medium text-[#12271E]">{{ $reg->package->name }}</div>
+                                <div class="font-semibold text-[#12271E]">{{ $reg->package->name }}</div>
                                 <div class="text-[11px] text-[#526057]">Berangkat: {{ $reg->package->departure_date ? $reg->package->departure_date->translatedFormat('d M Y') : '-' }}</div>
                             </td>
                             <td class="py-4 px-4 text-center whitespace-nowrap">
@@ -137,7 +178,7 @@
                             </td>
                             <td class="py-4 px-4 text-center whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold 
-                                    {{ in_array($reg->status, ['jamaah', 'cicilan_pelunasan', 'lunas', 'berangkat']) ? 'bg-emerald-100 text-emerald-800' : ($reg->status === 'dibatalkan' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800') }}">
+                                    {{ $reg->status === 'selesai' ? 'bg-purple-100 text-purple-800 border border-purple-200' : (in_array($reg->status, ['jamaah', 'cicilan_pelunasan', 'lunas', 'berangkat']) ? 'bg-emerald-100 text-emerald-800' : ($reg->status === 'menunggu_kelengkapan_keberangkatan' ? 'bg-purple-100 text-purple-900 border border-purple-200' : ($reg->status === 'dibatalkan' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'))) }}">
                                     {{ $reg->status_label }}
                                 </span>
                             </td>

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\Registration;
 use App\Models\RegistrationCancellation;
-use App\Services\WhatsappOtpInterface;
+use App\Contracts\WhatsAppNotificationInterface;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class CancellationController extends Controller
 {
     public function __construct(
-        protected WhatsappOtpInterface $whatsapp
+        protected WhatsAppNotificationInterface $whatsapp
     ) {}
 
     /**

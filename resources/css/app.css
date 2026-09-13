@@ -25,19 +25,39 @@
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     --font-serif: 'Playfair Display', Georgia, Cambria, 'Times New Roman', Times, serif;
 
-    /* Qahira Elementor Kit Precise Color Palette */
-    --color-primary: #1B3B2B;       /* Dark Forest Green (Qahira Main) */
+    /* Core Brand Tokens */
+    --color-primary: #1B3B2B;       /* Dark Forest Green (Qahira Main & Brand) */
     --color-primary-hover: #132E22; /* Darker Green Hover */
+    --color-primary-dark: #12271E;  /* Deepest Forest Tone (Headings & Dark Accents) */
     --color-primary-light: #EAF1E8; /* Soft mint / sage pill background */
     --color-sage: #EFF3EB;          /* Sage / Cream Ivory for Package Cards & Sections */
     --color-sage-dark: #E0E7DC;     /* Sage Border Tone */
-    --color-gold: #C2A264;          /* Subdued warm gold */
+    --color-gold: #C2A264;          /* Subdued warm gold (Brand Logo Hex) */
+    --color-gold-light: #E5C88F;    /* Soft champagne gold */
+    --color-surface-warm: #F7F5F0;  /* Warm cream/off-white background */
     --color-pure-white: #FFFFFF;    /* Pure White */
     --color-dark: #122B1F;          /* Deepest Forest Green for Topbar & Footer */
-    --color-text-main: #12271E;     /* Deep forest dark for serif headings */
+    --color-text-main: #12271E;     /* Deep forest dark for headings */
     --color-text-body: #526057;     /* Soft slate / forest gray for body */
     --color-text-muted: #4D5E54;    /* Muted label gray */
     --color-border: #E0E7DC;        /* Structural 1px border */
+
+    /* Universal Status Semantic Tokens */
+    --color-status-success: #15803D;
+    --color-status-success-bg: #F0FDF4;
+    --color-status-success-border: #BBF7D0;
+
+    --color-status-warning: #B45309;
+    --color-status-warning-bg: #FFFBEB;
+    --color-status-warning-border: #FDE68A;
+
+    --color-status-danger: #BE123C;
+    --color-status-danger-bg: #FFF1F2;
+    --color-status-danger-border: #FECDD3;
+
+    --color-status-neutral: #475569;
+    --color-status-neutral-bg: #F8FAFC;
+    --color-status-neutral-border: #E2E8F0;
 }
 
 /* ==================================================================

@@ -59,9 +59,11 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 Route::middleware(['auth', 'jamaah'])->group(function () {
     // PRD: Halaman "Status Pendaftaran Saya" (/my-registration)
     Route::get('/my-registration', [\App\Http\Controllers\Jamaah\RegistrationController::class, 'show'])->name('jamaah.my-registration');
+    Route::get('/portal/riwayat', fn() => redirect()->route('jamaah.history'));
 
     Route::prefix('jamaah')->name('jamaah.')->group(function () {
         Route::get('/dashboard', [JamaahDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/riwayat', [\App\Http\Controllers\Jamaah\HistoryController::class, 'index'])->name('history');
         Route::get('/pendaftaran', [\App\Http\Controllers\Jamaah\RegistrationController::class, 'create'])->name('registration.create');
         Route::post('/pendaftaran', [\App\Http\Controllers\Jamaah\RegistrationController::class, 'store'])->name('registration.store');
         Route::get('/status-pendaftaran', [\App\Http\Controllers\Jamaah\RegistrationController::class, 'show'])->name('registration.status');
@@ -157,6 +159,24 @@ Route::prefix('admin')->group(function () {
 
         // ── Galeri Media (Foto & Video) ──
         Route::resource('galleries', \App\Http\Controllers\Admin\GalleryController::class)->names('admin.galleries');
+
+        // ── Laporan & Rekapitulasi Eksekutif (Terpadu 1 Halaman) ──
+        Route::prefix('reports')->name('admin.reports.')->group(function () {
+            // Halaman Utama Laporan (Multi-Tab: jamaah, pembayaran, piutang, keberangkatan)
+            Route::get('/', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('index');
+
+            // Redirect alias kompatibilitas URL lama
+            Route::get('/jamaah', fn(\Illuminate\Http\Request $r) => redirect()->route('admin.reports.index', array_merge(['tab' => 'jamaah'], $r->all())))->name('jamaah');
+            Route::get('/payments', fn(\Illuminate\Http\Request $r) => redirect()->route('admin.reports.index', array_merge(['tab' => 'pembayaran'], $r->all())))->name('payments');
+            Route::get('/receivables', fn(\Illuminate\Http\Request $r) => redirect()->route('admin.reports.index', array_merge(['tab' => 'piutang'], $r->all())))->name('receivables');
+            Route::get('/departures', fn(\Illuminate\Http\Request $r) => redirect()->route('admin.reports.index', array_merge(['tab' => 'keberangkatan'], $r->all())))->name('departures');
+
+            // Export endpoints per jenis laporan
+            Route::get('/jamaah/export/{format?}', [\App\Http\Controllers\Admin\ReportController::class, 'exportJamaah'])->name('jamaah.export');
+            Route::get('/payments/export/{format?}', [\App\Http\Controllers\Admin\ReportController::class, 'exportPayments'])->name('payments.export');
+            Route::get('/receivables/export/{format?}', [\App\Http\Controllers\Admin\ReportController::class, 'exportReceivables'])->name('receivables.export');
+            Route::get('/departures/export/{format?}', [\App\Http\Controllers\Admin\ReportController::class, 'exportDepartures'])->name('departures.export');
+        });
     });
 });
 

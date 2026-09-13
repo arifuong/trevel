@@ -27,7 +27,18 @@ class RegistrationController extends Controller
      */
     public function index(Request $request)
     {
+        $tab = $request->input('tab', 'aktif');
+        if (!in_array($tab, ['aktif', 'riwayat'])) {
+            $tab = 'aktif';
+        }
+
         $query = Registration::with(['user', 'package', 'members', 'invoice'])->latest();
+
+        if ($tab === 'riwayat') {
+            $query->where('status', Registration::STATUS_SELESAI);
+        } else {
+            $query->where('status', '!=', Registration::STATUS_SELESAI);
+        }
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -37,16 +48,21 @@ class RegistrationController extends Controller
                        ->orWhere('phone', 'like', "%{$search}%");
                 })->orWhereHas('package', function ($pq) use ($search) {
                     $pq->where('name', 'like', "%{$search}%");
-                })->orWhere('id', 'like', "%{$search}%");
+                })->orWhere('id', 'like', "%{$search}%")
+                  ->orWhere('registration_number', 'like', "%{$search}%");
             });
         }
 
         if ($status = $request->input('status')) {
-            $query->where('status', $status);
+            if ($tab === 'riwayat' && $status === Registration::STATUS_SELESAI) {
+                $query->where('status', $status);
+            } elseif ($tab === 'aktif' && $status !== Registration::STATUS_SELESAI) {
+                $query->where('status', $status);
+            }
         }
 
         // Filter berdasarkan Phase dokumen (Tahap Awal vs Tahap Keberangkatan)
-        if ($phase = $request->input('phase')) {
+        if ($tab === 'aktif' && $phase = $request->input('phase')) {
             if ($phase === 'awal') {
                 $query->where('status', Registration::STATUS_MENUNGGU_VERIFIKASI_DOKUMEN);
             } elseif ($phase === 'keberangkatan') {
@@ -59,8 +75,27 @@ class RegistrationController extends Controller
 
         $registrations = $query->paginate(10)->withQueryString();
 
+        $activeCount = Registration::where('status', '!=', Registration::STATUS_SELESAI)->count();
+        $historyCount = Registration::where('status', Registration::STATUS_SELESAI)->count();
+
+        // Additional stats for riwayat tab
+        $completedMembersCount = DB::table('registration_members')
+            ->join('registrations', 'registration_members.registration_id', '=', 'registrations.id')
+            ->where('registrations.status', Registration::STATUS_SELESAI)
+            ->count();
+
+        $completedRevenue = DB::table('invoices')
+            ->join('registrations', 'invoices.registration_id', '=', 'registrations.id')
+            ->where('registrations.status', Registration::STATUS_SELESAI)
+            ->sum('invoices.total_price');
+
         return view('admin.registrations.index', [
             'registrations' => $registrations,
+            'currentTab' => $tab,
+            'activeCount' => $activeCount,
+            'historyCount' => $historyCount,
+            'completedMembersCount' => $completedMembersCount,
+            'completedRevenue' => $completedRevenue,
             'currentPhase' => $request->input('phase'),
             'totalRegistrations' => Registration::where('status', '!=', Registration::STATUS_DIBATALKAN)
                 ->where(function ($cq) {

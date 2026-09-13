@@ -76,8 +76,8 @@ class Registration extends Model
     protected static function booted(): void
     {
         static::creating(function (Registration $registration) {
-            if (empty($registration->registration_number)) {
-                $registration->registration_number = self::generateUniqueRegistrationNumber();
+            if (empty($registration->attributes['registration_number'])) {
+                $registration->attributes['registration_number'] = self::generateUniqueRegistrationNumber();
             }
         });
 

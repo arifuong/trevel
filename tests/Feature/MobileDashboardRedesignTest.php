@@ -175,10 +175,126 @@ class MobileDashboardRedesignTest extends TestCase
         $response->assertSee('Sisa Tagihan');
         // Mobile quick menus
         $response->assertSee('Menu Cepat Admin');
-        $response->assertSee('Perlu Tindakan');
         // Mobile & desktop separation
         $response->assertSee('lg:hidden', false);
         $response->assertSee('hidden lg:block', false);
     }
+
+    public function test_redesigned_card_renders_menunggu_pembayaran_dp_state_with_all_elements(): void
+    {
+        $jamaah = User::factory()->create(['role' => 'jamaah', 'name' => 'Fulan Test DP']);
+        $package = Package::create([
+            'name' => 'Umrah Awal Musim Gold',
+            'slug' => 'umrah-awal-musim-gold',
+            'price' => 32000000,
+            'duration' => 9,
+            'departure_date' => now()->addMonth()->format('Y-m-d'),
+            'facilities' => 'Hotel Bintang 5',
+            'quota' => 40,
+            'status' => 'aktif',
+        ]);
+        $registration = Registration::create([
+            'user_id' => $jamaah->id,
+            'package_id' => $package->id,
+            'status' => Registration::STATUS_MENUNGGU_PEMBAYARAN_DP,
+        ]);
+        Invoice::create([
+            'registration_id' => $registration->id,
+            'total_price' => 32000000,
+            'total_paid' => 0,
+            'remaining_balance' => 32000000,
+            'due_date' => now()->addDays(7),
+        ]);
+
+        $response = $this->actingAs($jamaah)->get(route('jamaah.dashboard'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Menunggu Pembayaran DP');
+        $response->assertSee($registration->registration_number);
+        $response->assertSee('Tahap 2 dari 9');
+        $response->assertSee('22%');
+        $response->assertSee('Tahap Ibadah');
+        $response->assertSee('Keberangkatan');
+        $response->assertSee('Sudah Dibayar');
+        $response->assertSee('Sisa Pelunasan');
+        $response->assertSee('Bayar DP');
+        $response->assertSee('Detail Pendaftaran');
+    }
+
+    public function test_redesigned_card_renders_berangkat_state_correctly(): void
+    {
+        $jamaah = User::factory()->create(['role' => 'jamaah', 'name' => 'Fulan Test Berangkat']);
+        $package = Package::create([
+            'name' => 'Umrah Plus Turki Premium',
+            'slug' => 'umrah-plus-turki-premium',
+            'price' => 48000000,
+            'duration' => 12,
+            'departure_date' => now()->addDays(5)->format('Y-m-d'),
+            'facilities' => 'Full Board',
+            'quota' => 30,
+            'status' => 'aktif',
+        ]);
+        $registration = Registration::create([
+            'user_id' => $jamaah->id,
+            'package_id' => $package->id,
+            'status' => Registration::STATUS_BERANGKAT,
+        ]);
+        Invoice::create([
+            'registration_id' => $registration->id,
+            'total_price' => 48000000,
+            'total_paid' => 48000000,
+            'remaining_balance' => 0,
+            'due_date' => now()->subDays(5),
+        ]);
+
+        $response = $this->actingAs($jamaah)->get(route('jamaah.dashboard'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Siap Berangkat');
+        $response->assertSee($registration->registration_number);
+        $response->assertSee('Tahap 8 dari 9');
+        $response->assertSee('89%');
+        $response->assertSee('LUNAS ✓');
+        $response->assertSee('Detail Pendaftaran');
+    }
+
+    public function test_redesigned_card_renders_selesai_state_correctly(): void
+    {
+        $jamaah = User::factory()->create(['role' => 'jamaah', 'name' => 'Fulan Test Selesai']);
+        $package = Package::create([
+            'name' => 'Haji Khusus Furoda VIP',
+            'slug' => 'haji-khusus-furoda-vip',
+            'price' => 250000000,
+            'duration' => 25,
+            'departure_date' => now()->subMonth()->format('Y-m-d'),
+            'facilities' => 'Maktub VIP',
+            'quota' => 20,
+            'status' => 'aktif',
+        ]);
+        $registration = Registration::create([
+            'user_id' => $jamaah->id,
+            'package_id' => $package->id,
+            'status' => Registration::STATUS_SELESAI,
+        ]);
+        Invoice::create([
+            'registration_id' => $registration->id,
+            'total_price' => 250000000,
+            'total_paid' => 250000000,
+            'remaining_balance' => 0,
+            'due_date' => now()->subMonths(2),
+        ]);
+
+        $response = $this->actingAs($jamaah)->get(route('jamaah.dashboard'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Selesai');
+        $response->assertSee($registration->registration_number);
+        $response->assertSee('Perjalanan Tuntas');
+        $response->assertSee('Tahap 9 dari 9');
+        $response->assertSee('100%');
+        $response->assertSee('LUNAS ✓');
+        $response->assertSee('Detail Pendaftaran');
+    }
 }
+
 

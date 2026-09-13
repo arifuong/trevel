@@ -88,13 +88,14 @@
                     </div>
 
                     {{-- Selesai Berangkat --}}
-                    <div class="col-span-2 bg-purple-500/20 rounded-2xl p-3 border border-purple-400/30 flex items-center justify-between">
+                    <div class="col-span-2 bg-[#12271E]/60 rounded-2xl p-3 border border-[#C2A264]/30 flex items-center justify-between">
                         <div>
-                            <span class="text-[10px] font-bold text-purple-200 uppercase tracking-wider block">Selesai Berangkat (Tahap 9)</span>
-                            <span class="text-[9px] text-white/60 block">Jamaah Tuntas Ibadah</span>
+                            <span class="text-[10px] font-bold text-[#E5C88F] uppercase tracking-wider block">Selesai Berangkat (Tahap 9)</span>
+                            <span class="text-[9px] text-emerald-100/70 block">Jamaah Tuntas Ibadah</span>
                         </div>
-                        <div class="text-base sm:text-lg font-extrabold text-purple-200">
-                            {{ $totalSelesai ?? 0 }} Jamaah
+                        <div class="text-base sm:text-lg font-extrabold text-white flex items-center gap-1.5">
+                            <span class="text-[#E5C88F] font-bold text-xs">★</span>
+                            <span>{{ $totalSelesai ?? 0 }} Jamaah</span>
                         </div>
                     </div>
                 </div>
@@ -310,11 +311,9 @@
                                     </p>
                                 </div>
                             </div>
-                            <div class="text-right shrink-0">
-                                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#EFF3EB] text-[#1B3B2B] border border-[#CCD8C7] block">
-                                    {{ $reg->status_label }}
-                                </span>
-                                <span class="text-[9px] text-[#526057] block mt-1">
+                            <div class="text-right shrink-0 flex flex-col items-end gap-1">
+                                <x-status-badge :status="$reg->status" size="xs" />
+                                <span class="text-[9px] text-[#526057]">
                                     {{ $reg->created_at->diffForHumans(null, true) }}
                                 </span>
                             </div>
@@ -361,6 +360,42 @@
                     @endforeach
                 </div>
             @endif
+        </div>
+
+        {{-- Mobile Analitik & Grafik Tren --}}
+        <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+                <h2 class="text-[11px] font-bold uppercase tracking-wider text-[#4D5E54]">Grafik Tren &amp; Analisis</h2>
+                <span class="text-[10px] font-bold text-[#1B3B2B] bg-[#EFF3EB] px-2 py-0.5 rounded-full border border-[#CCD8C7]">{{ $periodData['label'] }}</span>
+            </div>
+
+            <x-period-filter :filterData="$periodData" />
+
+            <div class="bg-white rounded-2xl border border-[#E0E7DC] p-4 shadow-2xs space-y-2">
+                <div class="flex items-center justify-between border-b border-[#E0E7DC] pb-2">
+                    <div>
+                        <span class="text-xs font-bold text-[#12271E] block">Tren Pendaftaran</span>
+                        <span class="text-[10px] text-[#526057]">Interval: {{ $periodData['granularity_label'] ?? 'Interval' }}</span>
+                    </div>
+                    <span class="text-xs font-extrabold text-[#1B3B2B]">{{ number_format($totalPeriodRegistrations) }} Jamaah</span>
+                </div>
+                <div class="relative h-48 w-full">
+                    <canvas id="registrationChartMobile"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-[#E0E7DC] p-4 shadow-2xs space-y-2">
+                <div class="flex items-center justify-between border-b border-[#E0E7DC] pb-2">
+                    <div>
+                        <span class="text-xs font-bold text-[#12271E] block">Arus Kas Masuk</span>
+                        <span class="text-[10px] text-[#526057]">Interval: {{ $periodData['granularity_label'] ?? 'Interval' }}</span>
+                    </div>
+                    <span class="text-xs font-extrabold text-[#C2A264]">Rp {{ number_format($totalPeriodIncome, 0, ',', '.') }}</span>
+                </div>
+                <div class="relative h-48 w-full">
+                    <canvas id="paymentChartMobile"></canvas>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -467,60 +502,60 @@
             </h2>
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
                 
-                <div class="bg-white rounded-2xl border border-[#E0E7DC] p-4 sm:p-5 shadow-2xs">
+                <div class="bg-white rounded-2xl border border-[#E0E7DC] p-4 sm:p-5 shadow-xs hover:border-[#1B3B2B]/30 transition-all">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-[10px] sm:text-[11px] font-bold text-[#4D5E54] uppercase tracking-wider">Total Jamaah</span>
-                        <div class="w-7 h-7 rounded-lg bg-[#EFF3EB] text-[#1B3B2B] flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                        <div class="w-8 h-8 rounded-xl bg-[#EFF3EB] text-[#1B3B2B] flex items-center justify-center border border-[#CCD8C7]">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
                         </div>
                     </div>
-                    <span class="text-2xl sm:text-3xl font-bold text-[#12271E] block">{{ $totalJamaah }}</span>
+                    <span class="text-2xl sm:text-3xl font-extrabold text-[#12271E] block">{{ $totalJamaah }}</span>
                     <span class="text-[11px] text-[#526057] mt-1 block">Akun Terdaftar</span>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-[#E0E7DC] p-4 sm:p-5 shadow-2xs">
+                <div class="bg-white rounded-2xl border border-[#E0E7DC] p-4 sm:p-5 shadow-xs hover:border-[#1B3B2B]/30 transition-all">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-[10px] sm:text-[11px] font-bold text-[#4D5E54] uppercase tracking-wider">Booking Aktif</span>
-                        <div class="w-7 h-7 rounded-lg bg-[#EFF3EB] text-[#1B3B2B] flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
+                        <div class="w-8 h-8 rounded-xl bg-[#EFF3EB] text-[#1B3B2B] flex items-center justify-center border border-[#CCD8C7]">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
                         </div>
                     </div>
-                    <span class="text-2xl sm:text-3xl font-bold text-[#12271E] block">{{ $totalPendaftaran }}</span>
+                    <span class="text-2xl sm:text-3xl font-extrabold text-[#12271E] block">{{ $totalPendaftaran }}</span>
                     <span class="text-[11px] text-[#526057] mt-1 block">{{ $totalPaketAktif }} Paket Aktif</span>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-purple-200/80 p-4 sm:p-5 shadow-2xs bg-gradient-to-b from-purple-50/40 to-white">
+                <div class="bg-white rounded-2xl border border-[#C2A264]/40 p-4 sm:p-5 shadow-xs bg-gradient-to-b from-[#F7F5F0] to-white hover:border-[#C2A264] transition-all">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-[10px] sm:text-[11px] font-bold text-purple-900 uppercase tracking-wider">Selesai Ibadah</span>
-                        <div class="w-7 h-7 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-[10px] sm:text-[11px] font-bold text-[#1B3B2B] uppercase tracking-wider">Selesai Ibadah</span>
+                        <div class="w-8 h-8 rounded-xl bg-[#1B3B2B] text-[#E5C88F] flex items-center justify-center border border-[#C2A264]/30 shadow-2xs">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
                     </div>
-                    <span class="text-2xl sm:text-3xl font-bold text-[#12271E] block">{{ $totalSelesai ?? 0 }}</span>
-                    <span class="text-[11px] text-purple-700 mt-1 block font-medium">Tahap 9 &bull; Tuntas</span>
+                    <span class="text-2xl sm:text-3xl font-extrabold text-[#12271E] block">{{ $totalSelesai ?? 0 }}</span>
+                    <span class="text-[11px] text-[#C2A264] mt-1 block font-bold">Tahap 9 &bull; Tuntas</span>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-emerald-200/80 p-4 sm:p-5 shadow-2xs bg-gradient-to-b from-emerald-50/30 to-white">
+                <div class="bg-white rounded-2xl border border-emerald-200 p-4 sm:p-5 shadow-xs bg-gradient-to-b from-emerald-50/40 to-white hover:border-emerald-300 transition-all">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Dana Masuk</span>
-                        <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs border border-emerald-200">
                             Rp
                         </div>
                     </div>
-                    <span class="text-xl sm:text-2xl font-bold text-[#12271E] block truncate">
+                    <span class="text-xl sm:text-2xl font-extrabold text-[#12271E] block truncate">
                         Rp {{ number_format($totalIncome, 0, ',', '.') }}
                     </span>
                     <span class="text-[11px] text-emerald-700 mt-1 block font-medium">Sudah diverifikasi</span>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-[#E0E7DC] p-4 sm:p-5 shadow-2xs">
+                <div class="bg-white rounded-2xl border border-[#E0E7DC] p-4 sm:p-5 shadow-xs hover:border-[#1B3B2B]/30 transition-all">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-[10px] sm:text-[11px] font-bold text-[#4D5E54] uppercase tracking-wider">Sisa Pembayaran</span>
-                        <div class="w-7 h-7 rounded-lg bg-[#EFF3EB] text-[#526057] flex items-center justify-center font-bold text-xs">
+                        <div class="w-8 h-8 rounded-xl bg-[#EFF3EB] text-[#526057] flex items-center justify-center font-bold text-xs border border-[#CCD8C7]">
                             Rp
                         </div>
                     </div>
-                    <span class="text-xl sm:text-2xl font-bold text-[#12271E] block truncate">
+                    <span class="text-xl sm:text-2xl font-extrabold text-[#C2A264] block truncate">
                         Rp {{ number_format($totalOutstanding, 0, ',', '.') }}
                     </span>
                     <span class="text-[11px] text-[#526057] mt-1 block">Menunggu pelunasan</span>
@@ -529,7 +564,89 @@
             </div>
         </div>
 
-        {{-- 4. Tabel Ringkasan Pendaftar per Paket Umrah --}}
+        {{-- 4. Grafik & Analitik Kinerja Berdasarkan Periode (PRD Bagian 15) --}}
+        <div class="space-y-4">
+            <div>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#4D5E54]">
+                    Tren &amp; Analitik Kinerja
+                </h2>
+                <p class="text-xs text-[#526057] mt-0.5">
+                    Visualisasi pendaftaran jamaah dan arus kas pembayaran untuk periode: <span class="font-bold text-[#1B3B2B]">{{ $periodData['label'] }}</span>
+                </p>
+            </div>
+
+            {{-- Komponen Filter Periode --}}
+            <x-period-filter :filterData="$periodData" />
+
+            {{-- 2 Grid Grafik --}}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {{-- Grafik Pendaftaran --}}
+                <div class="bg-white rounded-3xl border border-[#E0E7DC] p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-3 pb-4 border-b border-[#E0E7DC]">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-9 h-9 rounded-xl bg-[#EFF3EB] text-[#1B3B2B] flex items-center justify-center border border-[#CCD8C7]">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-[#12271E]">Grafik Tren Pendaftaran</h3>
+                                    <p class="text-[11px] text-[#526057]">Jumlah pendaftaran baru per interval</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] uppercase font-bold text-[#526057] block">Total Periode</span>
+                                <span class="text-base font-extrabold text-[#1B3B2B]">{{ number_format($totalPeriodRegistrations) }} Jamaah</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 relative h-64 sm:h-72 w-full">
+                            <canvas id="registrationChartDesktop"></canvas>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-[#E0E7DC]/60 flex items-center justify-between text-[11px] text-[#526057]">
+                        <span>Sumbu X: {{ $periodData['granularity_label'] ?? 'Interval Periode' }}</span>
+                        <a href="{{ route('admin.reports.jamaah', request()->query()) }}" class="font-bold text-[#1B3B2B] hover:underline">
+                            Buka Laporan Jamaah &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Grafik Pembayaran --}}
+                <div class="bg-white rounded-3xl border border-[#E0E7DC] p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-3 pb-4 border-b border-[#E0E7DC]">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center border border-amber-200">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-[#12271E]">Grafik Arus Kas Masuk</h3>
+                                    <p class="text-[11px] text-[#526057]">Nominal pembayaran tervalidasi per interval</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] uppercase font-bold text-[#526057] block">Total Periode</span>
+                                <span class="text-base font-extrabold text-[#C2A264]">Rp {{ number_format($totalPeriodIncome, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 relative h-64 sm:h-72 w-full">
+                            <canvas id="paymentChartDesktop"></canvas>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-[#E0E7DC]/60 flex items-center justify-between text-[11px] text-[#526057]">
+                        <span>Sumbu X: {{ $periodData['granularity_label'] ?? 'Interval Periode' }}</span>
+                        <a href="{{ route('admin.reports.payments', request()->query()) }}" class="font-bold text-[#1B3B2B] hover:underline">
+                            Buka Laporan Pembayaran &rarr;
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        {{-- 5. Tabel Ringkasan Pendaftar per Paket Umrah --}}
         <div class="bg-white rounded-3xl border border-[#E0E7DC] shadow-xs overflow-hidden">
             <div class="px-6 py-5 border-b border-[#E0E7DC] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#EFF3EB]/30">
                 <div>
@@ -574,11 +691,11 @@
                                     </td>
                                     <td class="py-4 px-4 text-center">
                                         @if($pkg->status === 'sold_out' || $pkg->pax_count >= $pkg->quota)
-                                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700">Penuh / Habis</span>
+                                            <x-status-badge status="sold_out" size="xs" label="Penuh / Habis" />
                                         @elseif($pkg->status === 'aktif')
-                                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Tersedia</span>
+                                            <x-status-badge status="aktif" size="xs" label="Tersedia" />
                                         @else
-                                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-zinc-100 text-zinc-600">{{ ucfirst($pkg->status) }}</span>
+                                            <x-status-badge :status="$pkg->status" size="xs" />
                                         @endif
                                     </td>
                                     <td class="py-4 px-6 text-right font-bold text-[#12271E]">
@@ -600,7 +717,7 @@
             @endif
         </div>
 
-        {{-- 5. Tabel Peringatan Batas Pembayaran & Pendaftaran Terbaru --}}
+        {{-- 6. Tabel Peringatan Batas Pembayaran & Pendaftaran Terbaru --}}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
 
             {{-- Peringatan Batas Pembayaran --}}
@@ -674,11 +791,9 @@
                                             {{ $reg->package->name ?? '-' }} &bull; {{ $reg->members->count() }} Anggota Keluarga
                                         </span>
                                     </div>
-                                    <div class="text-right shrink-0">
-                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#EFF3EB] text-[#1B3B2B] border border-[#E0E7DC]">
-                                            {{ $reg->status_label }}
-                                        </span>
-                                        <span class="text-[10px] text-[#526057] block mt-1">
+                                    <div class="text-right shrink-0 flex flex-col items-end gap-1">
+                                        <x-status-badge :status="$reg->status" size="xs" />
+                                        <span class="text-[10px] text-[#526057]">
                                             {{ $reg->created_at->diffForHumans() }}
                                         </span>
                                     </div>
@@ -698,5 +813,155 @@
         </div>
 
     </div>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const labels = @json($chartLabels);
+        const regData = @json($registrationChartData);
+        const payData = @json($paymentChartData);
+
+        const formatRupiah = (val) => {
+            return 'Rp ' + new Intl.NumberFormat('id-ID').format(val);
+        };
+
+        function initChart(id, config) {
+            const el = document.getElementById(id);
+            if (el) {
+                return new Chart(el.getContext('2d'), config);
+            }
+            return null;
+        }
+
+        // Config for Registration Chart (Line Chart with smooth tension)
+        const regChartConfig = {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Jumlah Pendaftaran',
+                    data: regData,
+                    borderColor: '#1B3B2B',
+                    backgroundColor: 'rgba(27, 59, 43, 0.12)',
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#1B3B2B',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#12271E',
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(ctx) {
+                                return ` ${ctx.parsed.y} Jamaah Terdaftar`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: '#526057',
+                            font: { size: 11, weight: '500' }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0,
+                            color: '#526057',
+                            font: { size: 11 }
+                        },
+                        grid: {
+                            color: 'rgba(224, 231, 220, 0.6)'
+                        }
+                    }
+                }
+            }
+        };
+
+        // Config for Payment Chart (Bar Chart with rounded bars)
+        const payChartConfig = {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Pemasukan Kas',
+                    data: payData,
+                    backgroundColor: '#C2A264',
+                    hoverBackgroundColor: '#A88748',
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#12271E',
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(ctx) {
+                                return ` Total: ${formatRupiah(ctx.parsed.y)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: '#526057',
+                            font: { size: 11, weight: '500' }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#526057',
+                            font: { size: 11 },
+                            callback: function(value) {
+                                if (value >= 1000000000) return (value / 1000000000).toFixed(1) + 'M';
+                                if (value >= 1000000) return (value / 1000000).toFixed(0) + 'Jt';
+                                if (value >= 1000) return (value / 1000).toFixed(0) + 'Rb';
+                                return value;
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(224, 231, 220, 0.6)'
+                        }
+                    }
+                }
+            }
+        };
+
+        initChart('registrationChartDesktop', regChartConfig);
+        initChart('paymentChartDesktop', payChartConfig);
+        initChart('registrationChartMobile', JSON.parse(JSON.stringify(regChartConfig)));
+        initChart('paymentChartMobile', JSON.parse(JSON.stringify(payChartConfig)));
+    });
+    </script>
+    @endpush
 
 </x-layouts.admin>

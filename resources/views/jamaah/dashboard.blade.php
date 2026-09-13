@@ -50,96 +50,317 @@
             </a>
         </div>
 
-        {{-- Mobile Card Utama: Ringkasan & Statistik Ibadah --}}
-        @if($registration)
-            <div class="bg-gradient-to-br from-[#1B3B2B] via-[#173527] to-[#10241A] text-white rounded-3xl p-4 sm:p-5 shadow-lg border border-white/10 relative overflow-hidden space-y-3.5">
-                {{-- Decorative Glow Accent --}}
-                <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#C2A264]/15 rounded-full blur-2xl pointer-events-none"></div>
+        {{-- ═══════════════════════════════════════════════════════════════
+             KONDISI A (MOBILE): ADA BOOKING AKTIF (STATUS BUKAN 'SELESAI')
+             ═══════════════════════════════════════════════════════════════ --}}
+        @if(($dashboardState ?? 'A') === 'A' && count($activeRegistrations ?? ($registration ? [$registration] : [])) > 0)
+            @php $regsToRender = $activeRegistrations ?? ($registration ? collect([$registration]) : collect()); @endphp
+            @if($regsToRender->count() > 1)
+                <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 font-semibold flex items-center justify-between shadow-2xs">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span>Anda memiliki {{ $regsToRender->count() }} Pendaftaran Aktif</span>
+                    </div>
+                    <span class="text-[10px] text-amber-700 font-normal">Urutan Perhatian</span>
+                </div>
+            @endif
 
-                {{-- Header Card: Status & No. Registrasi --}}
-                <div class="flex items-center justify-between gap-2 border-b border-white/10 pb-2.5">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-xs text-[10px] font-bold tracking-wide text-emerald-300 border border-white/15 truncate max-w-[60%]">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+            @foreach($regsToRender as $regIndex => $registration)
+            @php
+                $step = $registration->step_number;
+                $totalSteps = \App\Models\Registration::TOTAL_STEPS;
+                $progress = $registration->progress_percentage;
+                $statusKey = $registration->status;
+
+                $statusConfig = [
+                    \App\Models\Registration::STATUS_MENUNGGU_VERIFIKASI_DOKUMEN => [
+                        'theme' => 'amber',
+                        'badge_bg' => 'bg-amber-500/20 text-amber-300 border-amber-400/30',
+                        'badge_bg_desktop' => 'bg-amber-50 text-amber-800 border-amber-200',
+                        'dot_color' => 'bg-amber-400',
+                        'pulse' => true,
+                        'icon' => 'doc_search',
+                        'state_note' => 'Verifikasi Dokumen Berkas',
+                    ],
+                    \App\Models\Registration::STATUS_MENUNGGU_PEMBAYARAN_DP => [
+                        'theme' => 'gold',
+                        'badge_bg' => 'bg-[#C2A264]/25 text-[#E5C88F] border-[#C2A264]/40',
+                        'badge_bg_desktop' => 'bg-amber-50 text-amber-900 border-amber-300',
+                        'dot_color' => 'bg-[#E5C88F]',
+                        'pulse' => true,
+                        'icon' => 'banknotes',
+                        'state_note' => 'Menunggu Pembayaran DP',
+                    ],
+                    'dokumen_disetujui' => [
+                        'theme' => 'gold',
+                        'badge_bg' => 'bg-[#C2A264]/25 text-[#E5C88F] border-[#C2A264]/40',
+                        'badge_bg_desktop' => 'bg-amber-50 text-amber-900 border-amber-300',
+                        'dot_color' => 'bg-[#E5C88F]',
+                        'pulse' => true,
+                        'icon' => 'banknotes',
+                        'state_note' => 'Menunggu Pembayaran DP',
+                    ],
+                    \App\Models\Registration::STATUS_MENUNGGU_VERIFIKASI_PEMBAYARAN_DP => [
+                        'theme' => 'sky',
+                        'badge_bg' => 'bg-sky-500/20 text-sky-300 border-sky-400/30',
+                        'badge_bg_desktop' => 'bg-sky-50 text-sky-800 border-sky-200',
+                        'dot_color' => 'bg-sky-400',
+                        'pulse' => true,
+                        'icon' => 'refresh',
+                        'state_note' => 'Verifikasi Setoran DP',
+                    ],
+                    \App\Models\Registration::STATUS_JAMAAH => [
+                        'theme' => 'teal',
+                        'badge_bg' => 'bg-teal-500/20 text-teal-200 border-teal-400/30',
+                        'badge_bg_desktop' => 'bg-teal-50 text-teal-800 border-teal-200',
+                        'dot_color' => 'bg-teal-400',
+                        'pulse' => false,
+                        'icon' => 'badge_check',
+                        'state_note' => 'Calon Jamaah Resmi',
+                    ],
+                    \App\Models\Registration::STATUS_CICILAN_PELUNASAN => [
+                        'theme' => 'indigo',
+                        'badge_bg' => 'bg-indigo-500/20 text-indigo-200 border-indigo-400/30',
+                        'badge_bg_desktop' => 'bg-indigo-50 text-indigo-800 border-indigo-200',
+                        'dot_color' => 'bg-indigo-400',
+                        'pulse' => true,
+                        'icon' => 'trending_up',
+                        'state_note' => 'Proses Pelunasan Bertahap',
+                    ],
+                    \App\Models\Registration::STATUS_LUNAS => [
+                        'theme' => 'emerald',
+                        'badge_bg' => 'bg-emerald-500/25 text-emerald-200 border-emerald-400/40',
+                        'badge_bg_desktop' => 'bg-emerald-50 text-emerald-800 border-emerald-300',
+                        'dot_color' => 'bg-emerald-400',
+                        'pulse' => false,
+                        'icon' => 'shield_check',
+                        'state_note' => 'Seluruh Biaya Lunas',
+                    ],
+                    \App\Models\Registration::STATUS_MENUNGGU_KELENGKAPAN_KEBERANGKATAN => [
+                        'theme' => 'amber',
+                        'badge_bg' => 'bg-amber-500/20 text-amber-200 border-amber-400/30',
+                        'badge_bg_desktop' => 'bg-amber-50 text-amber-800 border-amber-200',
+                        'dot_color' => 'bg-amber-400',
+                        'pulse' => true,
+                        'icon' => 'document_text',
+                        'state_note' => 'Lengkapi Dokumen Keberangkatan',
+                    ],
+                    \App\Models\Registration::STATUS_BERANGKAT => [
+                        'theme' => 'gold_emerald',
+                        'badge_bg' => 'bg-gradient-to-r from-[#C2A264]/30 to-emerald-500/30 text-[#E5C88F] border-[#C2A264]/50 shadow-sm shadow-[#C2A264]/20',
+                        'badge_bg_desktop' => 'bg-emerald-100 text-[#1B3B2B] border-emerald-300',
+                        'dot_color' => 'bg-[#E5C88F]',
+                        'pulse' => true,
+                        'icon' => 'airplane',
+                        'state_note' => 'Siap Berangkat ke Tanah Suci',
+                    ],
+                    \App\Models\Registration::STATUS_SELESAI => [
+                        'theme' => 'purple_gold',
+                        'badge_bg' => 'bg-gradient-to-r from-purple-500/25 via-emerald-500/25 to-[#C2A264]/25 text-purple-200 border-purple-400/40 shadow-sm shadow-purple-500/20',
+                        'badge_bg_desktop' => 'bg-purple-50 text-purple-900 border-purple-200',
+                        'dot_color' => 'bg-purple-400',
+                        'pulse' => false,
+                        'icon' => 'sparkles',
+                        'state_note' => 'Perjalanan Tuntas & Mabrur',
+                    ],
+                    \App\Models\Registration::STATUS_DIBATALKAN => [
+                        'theme' => 'rose',
+                        'badge_bg' => 'bg-rose-500/20 text-rose-300 border-rose-400/30',
+                        'badge_bg_desktop' => 'bg-red-50 text-red-800 border-red-200',
+                        'dot_color' => 'bg-rose-400',
+                        'pulse' => false,
+                        'icon' => 'x_circle',
+                        'state_note' => 'Pendaftaran Dibatalkan',
+                    ],
+                ];
+
+                $statusMeta = $statusConfig[$statusKey] ?? [
+                    'theme' => 'emerald',
+                    'badge_bg' => 'bg-white/10 text-emerald-300 border-white/15',
+                    'badge_bg_desktop' => 'bg-[#EFF3EB] text-[#1B3B2B] border-[#CCD8C7]',
+                    'dot_color' => 'bg-emerald-400',
+                    'pulse' => false,
+                    'icon' => 'badge_check',
+                    'state_note' => 'Dalam Proses',
+                ];
+            @endphp
+
+            <div class="bg-gradient-to-br from-[#122b1f] via-[#1B3B2B] to-[#0d1f16] text-white rounded-3xl p-4 sm:p-5 shadow-xl border border-white/12 relative overflow-hidden space-y-4">
+                {{-- Decorative Glow Accents --}}
+                <div class="absolute -top-12 -right-12 w-36 h-36 bg-[#C2A264]/15 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute -bottom-12 -left-12 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                {{-- Header Card: Status Focal Point & Booking Reference Chip --}}
+                <div class="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full {{ $statusMeta['badge_bg'] }} backdrop-blur-md text-[11px] font-bold tracking-wide border shadow-xs truncate max-w-[62%]">
+                        <span class="w-2 h-2 rounded-full {{ $statusMeta['dot_color'] }} {{ $statusMeta['pulse'] ? 'animate-pulse' : '' }} shrink-0"></span>
+                        @include('jamaah.partials.status-icon', ['icon' => $statusMeta['icon']])
                         <span class="truncate">{{ $registration->status_label }}</span>
                     </span>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-white/15 border border-white/25 text-[11px] font-mono font-bold text-emerald-200 tracking-wider shrink-0 shadow-2xs">
-                        {{ $registration->registration_number }}
-                    </span>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/40 backdrop-blur-md border border-[#C2A264]/40 shadow-inner shrink-0">
+                        <svg class="w-3 h-3 text-[#E5C88F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+                        </svg>
+                        <span class="text-[11px] font-mono font-bold text-[#E5C88F] tracking-wider">
+                            {{ $registration->registration_number }}
+                        </span>
+                    </div>
                 </div>
 
-                {{-- Paket Title --}}
-                <div class="space-y-0.5">
-                    <span class="text-[10px] uppercase font-bold tracking-widest text-[#C2A264] block">
-                        Paket Pilihan
-                    </span>
+                {{-- Paket Title & Metadata --}}
+                <div class="space-y-1.5">
+                    <div class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#C2A264]"></span>
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-[#C2A264]">
+                            Paket Pilihan Ibadah
+                        </span>
+                    </div>
                     <h2 class="text-base sm:text-lg font-bold text-white tracking-tight leading-snug line-clamp-2">
                         {{ $registration->package->name ?? 'Paket Perjalanan Umrah' }}
                     </h2>
-                    @if($registration->packageVariant)
-                        <p class="text-xs text-emerald-200 font-medium">
-                            Varian {{ $registration->packageVariant->name }} &bull; Kamar {{ ucfirst($registration->room_type ?? 'Quad') }}
-                        </p>
-                    @endif
-                </div>
-
-                {{-- Grid 2-Kolom Ringkasan Statistik (Angka Menonjol, Anti-Overflow pada 320px) --}}
-                <div class="grid grid-cols-2 gap-2.5 sm:gap-3 bg-black/30 backdrop-blur-xs rounded-2xl p-3 sm:p-3.5 border border-white/15">
-                    <div class="min-w-0">
-                        <span class="text-[9px] uppercase font-bold tracking-wider text-emerald-200 block leading-tight">
-                            Tahap Ibadah
+                    <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                        @if($registration->packageVariant)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 text-emerald-200 text-[10.5px] font-semibold border border-white/10">
+                                <span>Varian {{ $registration->packageVariant->name }}</span>
+                            </span>
+                        @endif
+                        @if($registration->room_type)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 text-emerald-200 text-[10.5px] font-semibold border border-white/10">
+                                <span>Kamar {{ ucfirst($registration->room_type) }}</span>
+                            </span>
+                        @endif
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 text-emerald-200 text-[10.5px] font-semibold border border-white/10">
+                            <span>{{ $registration->members->count() }} Jamaah</span>
                         </span>
-                        <div class="text-sm sm:text-base font-extrabold text-white mt-1 truncate" title="{{ $registration->status_label }}">
-                            {{ $registration->status_label }}
-                        </div>
-                        <span class="text-[9.5px] text-white/70 block truncate mt-0.5">
-                            {{ $registration->isCompleted() ? 'Perjalanan Tuntas ✓' : 'Dalam Proses' }}
-                        </span>
-                    </div>
-
-                    <div class="min-w-0">
-                        <span class="text-[9px] uppercase font-bold tracking-wider text-emerald-200 block leading-tight">
-                            Keberangkatan
-                        </span>
-                        <div class="text-sm sm:text-base font-extrabold text-white mt-1 truncate">
-                            {{ $registration->package->departure_date ? $registration->package->departure_date->translatedFormat('d M Y') : 'Reguler' }}
-                        </div>
-                        <span class="text-[9.5px] text-white/70 block truncate mt-0.5">{{ $registration->package->duration ?? 9 }} Hari</span>
-                    </div>
-
-                    <div class="min-w-0 pt-2.5 border-t border-white/10">
-                        <span class="text-[9px] uppercase font-bold tracking-wider text-emerald-200 block leading-tight">
-                            Sudah Dibayar
-                        </span>
-                        <div class="text-sm sm:text-base font-extrabold text-emerald-300 mt-1 truncate">
-                            Rp {{ number_format($registration->invoice->total_paid ?? 0, 0, ',', '.') }}
-                        </div>
-                        <span class="text-[9.5px] text-white/70 block truncate mt-0.5">Terverifikasi</span>
-                    </div>
-
-                    <div class="min-w-0 pt-2.5 border-t border-white/10">
-                        <span class="text-[9px] uppercase font-bold tracking-wider text-[#E5C88F] block leading-tight">
-                            Sisa Pelunasan
-                        </span>
-                        <div class="text-sm sm:text-base font-extrabold {{ ($registration->invoice->remaining_balance ?? 0) <= 0 ? 'text-emerald-300' : 'text-amber-300' }} mt-1 truncate">
-                            @if(($registration->invoice->remaining_balance ?? 0) <= 0)
-                                LUNAS ✓
-                            @else
-                                Rp {{ number_format($registration->invoice->remaining_balance, 0, ',', '.') }}
-                            @endif
-                        </div>
-                        <span class="text-[9.5px] text-white/70 block truncate mt-0.5">{{ $registration->members->count() }} Jamaah</span>
                     </div>
                 </div>
 
-                {{-- Progress Bar Tahapan --}}
+                {{-- Grid 4-Blok Ringkasan Statistik (Frosted Glass Cards dengan Contextual Icons) --}}
+                <div class="grid grid-cols-2 gap-2.5 sm:gap-3">
+                    {{-- Blok 1: Tahap Ibadah --}}
+                    <div class="min-w-0 bg-white/[0.07] hover:bg-white/[0.1] transition-colors rounded-2xl p-3 sm:p-3.5 border border-white/10 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-1.5 text-emerald-200/90 mb-1">
+                                <svg class="w-3.5 h-3.5 shrink-0 text-[#C2A264]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a1.125 1.125 0 00.864-1.094V4.606a1.125 1.125 0 00-1.272-1.108l-3.21.755a9 9 0 01-6.086-.71l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" />
+                                </svg>
+                                <span class="text-[9.5px] uppercase font-bold tracking-wider truncate">
+                                    Tahap Ibadah
+                                </span>
+                            </div>
+                            <div class="text-sm sm:text-base font-extrabold text-white truncate" title="Tahap {{ $step }} dari {{ $totalSteps }}">
+                                Tahap {{ $step }} dari {{ $totalSteps }}
+                            </div>
+                        </div>
+                        <span class="text-[9.5px] text-white/70 block truncate mt-1">
+                            {{ $registration->isCompleted() ? 'Perjalanan Tuntas ✓' : ($statusMeta['state_note'] ?? $registration->status_label) }}
+                        </span>
+                    </div>
+
+                    {{-- Blok 2: Keberangkatan --}}
+                    <div class="min-w-0 bg-white/[0.07] hover:bg-white/[0.1] transition-colors rounded-2xl p-3 sm:p-3.5 border border-white/10 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-1.5 text-emerald-200/90 mb-1">
+                                <svg class="w-3.5 h-3.5 shrink-0 text-[#C2A264]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" />
+                                </svg>
+                                <span class="text-[9.5px] uppercase font-bold tracking-wider truncate">
+                                    Keberangkatan
+                                </span>
+                            </div>
+                            <div class="text-sm sm:text-base font-extrabold text-white truncate">
+                                {{ $registration->package->departure_date ? $registration->package->departure_date->translatedFormat('d M Y') : 'Reguler' }}
+                            </div>
+                        </div>
+                        <span class="text-[9.5px] text-[#E5C88F] font-medium block truncate mt-1">
+                            {{ $registration->package->duration ?? 9 }} Hari Perjalanan
+                        </span>
+                    </div>
+
+                    {{-- Blok 3: Sudah Dibayar --}}
+                    <div class="min-w-0 bg-white/[0.07] hover:bg-white/[0.1] transition-colors rounded-2xl p-3 sm:p-3.5 border border-white/10 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-1.5 text-emerald-200/90 mb-1">
+                                <svg class="w-3.5 h-3.5 shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15A2.25 2.25 0 002.25 6.75v10.5A2.25 2.25 0 004.5 19.5z" />
+                                </svg>
+                                <span class="text-[9.5px] uppercase font-bold tracking-wider truncate">
+                                    Sudah Dibayar
+                                </span>
+                            </div>
+                            <div class="text-sm sm:text-base font-extrabold text-emerald-300 mt-0.5 truncate">
+                                Rp {{ number_format($registration->invoice->total_paid ?? 0, 0, ',', '.') }}
+                            </div>
+                        </div>
+                        <span class="text-[9.5px] text-white/70 block truncate mt-1">
+                            Terverifikasi Sistem
+                        </span>
+                    </div>
+
+                    {{-- Blok 4: Sisa Pelunasan --}}
+                    <div class="min-w-0 bg-white/[0.07] hover:bg-white/[0.1] transition-colors rounded-2xl p-3 sm:p-3.5 border border-white/10 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-1.5 text-[#E5C88F] mb-1">
+                                <svg class="w-3.5 h-3.5 shrink-0 text-[#C2A264]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
+                                </svg>
+                                <span class="text-[9.5px] uppercase font-bold tracking-wider truncate">
+                                    Sisa Pelunasan
+                                </span>
+                            </div>
+                            <div class="text-sm sm:text-base font-extrabold {{ ($registration->invoice->remaining_balance ?? 0) <= 0 ? 'text-emerald-300' : 'text-amber-300' }} mt-0.5 truncate">
+                                @if(($registration->invoice->remaining_balance ?? 0) <= 0)
+                                    LUNAS ✓
+                                @else
+                                    Rp {{ number_format($registration->invoice->remaining_balance, 0, ',', '.') }}
+                                @endif
+                            </div>
+                        </div>
+                        <span class="text-[9.5px] text-white/70 block truncate mt-1">
+                            {{ $registration->members->count() }} Jamaah Terdaftar
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Milestone Stepper & Progress Bar --}}
                 @if($registration->status !== 'dibatalkan')
-                    <div class="space-y-1.5 pt-0.5">
-                        <div class="flex items-center justify-between text-[10px] text-white/90 font-medium">
-                            <span>Progres Kesiapan Ibadah</span>
-                            <span class="font-bold text-[#E5C88F]">{{ $registration->progress_percentage }}%</span>
+                    <div class="space-y-2 pt-1 bg-black/25 backdrop-blur-xs rounded-2xl p-3 sm:p-3.5 border border-white/10">
+                        {{-- Progress Bar Header --}}
+                        <div class="flex items-center justify-between text-[11px] text-white/90 font-medium">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-[#C2A264] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+                                </svg>
+                                <span>Progres Kesiapan Ibadah</span>
+                            </span>
+                            <div class="flex items-center gap-1.5 font-bold">
+                                <span class="text-emerald-300 text-[10px]">Tahap {{ $step }}/{{ $totalSteps }}</span>
+                                <span class="text-white/30">&bull;</span>
+                                <span class="text-[#E5C88F]">{{ $registration->progress_percentage }}%</span>
+                            </div>
                         </div>
-                        <div class="w-full bg-white/15 rounded-full h-2.5 overflow-hidden border border-white/10">
-                            <div class="bg-gradient-to-r from-[#C2A264] to-emerald-400 h-full rounded-full transition-all duration-500 shadow-sm" style="width: {{ $registration->progress_percentage }}%"></div>
+
+                        {{-- 9 Discrete Milestone Segments --}}
+                        <div class="grid grid-cols-9 gap-1 py-0.5" title="Tahap {{ $step }} dari {{ $totalSteps }} ({{ $registration->progress_percentage }}%)">
+                            @for($i = 1; $i <= $totalSteps; $i++)
+                                @php
+                                    $isPassed = $i < $step;
+                                    $isCurrent = $i === $step;
+                                @endphp
+                                <div class="relative flex flex-col items-center">
+                                    <div class="w-full h-2 rounded-full transition-all duration-300 {{ 
+                                        $isCurrent 
+                                            ? 'bg-gradient-to-r from-[#C2A264] to-emerald-400 shadow-sm shadow-[#C2A264]/50 ring-1 ring-white/60 animate-pulse' 
+                                            : ($isPassed ? 'bg-emerald-400/90 shadow-xs' : 'bg-white/15') 
+                                    }}"></div>
+                                </div>
+                            @endfor
+                        </div>
+
+                        {{-- Continuous Micro-Bar --}}
+                        <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden border border-white/5">
+                            <div class="bg-gradient-to-r from-[#C2A264] via-emerald-400 to-teal-300 h-full rounded-full transition-all duration-500 shadow-sm" style="width: {{ $registration->progress_percentage }}%"></div>
                         </div>
                     </div>
                 @endif
@@ -148,39 +369,141 @@
                 <div class="pt-1 flex items-center gap-2">
                     @if($registration->status === 'menunggu_pembayaran_dp' || $registration->status === 'dokumen_disetujui')
                         <a href="{{ route('jamaah.payment.dp') }}" 
-                           class="flex-1 py-2.5 px-3 rounded-xl bg-[#C2A264] hover:bg-[#b09153] text-[#12271E] font-bold text-xs text-center shadow-md transition-all truncate">
-                            Bayar DP &rarr;
+                           class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#C2A264] to-[#B09153] hover:brightness-110 active:scale-[0.98] text-[#12271E] font-extrabold text-xs text-center shadow-md shadow-[#C2A264]/20 transition-all truncate flex items-center justify-center gap-1.5">
+                            <span>Bayar DP</span>
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                         </a>
                     @elseif(in_array($registration->status, ['jamaah', 'cicilan_pelunasan']))
                         <a href="{{ route('jamaah.payment.pelunasan') }}" 
-                           class="flex-1 py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs text-center shadow-md transition-all truncate">
-                            Setor Pelunasan &rarr;
+                           class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-[0.98] text-white font-extrabold text-xs text-center shadow-md shadow-emerald-600/20 transition-all truncate flex items-center justify-center gap-1.5">
+                            <span>Setor Pelunasan</span>
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                         </a>
                     @endif
                     <a href="{{ route('jamaah.my-registration') }}" 
-                       class="flex-1 py-2.5 px-3 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs text-center border border-white/20 transition-all truncate">
-                        Detail Pendaftaran
+                       class="flex-1 py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[0.98] text-white font-semibold text-xs text-center border border-white/20 transition-all truncate flex items-center justify-center gap-1.5">
+                        <span>Detail Pendaftaran</span>
+                        <svg class="w-3.5 h-3.5 shrink-0 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
                     </a>
                 </div>
             </div>
+            @endforeach
+
+        {{-- ═══════════════════════════════════════════════════════════════
+             KONDISI B (MOBILE): SEMUA BOOKING SUDAH 'SELESAI' (PUNYA RIWAYAT)
+             ═══════════════════════════════════════════════════════════════ --}}
+        @elseif(($dashboardState ?? '') === 'B')
+            <div class="bg-gradient-to-br from-[#122B1F] via-[#1B3B2B] to-[#0D1E16] text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-[#C2A264]/40 relative overflow-hidden space-y-4">
+                {{-- Decorative Glow --}}
+                <div class="absolute -right-8 -top-8 w-40 h-40 bg-[#C2A264]/15 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute -left-8 -bottom-8 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                <div class="relative z-10 space-y-3.5">
+                    {{-- Header Sambutan Selesai --}}
+                    <div class="flex items-start gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-white/10 text-xl flex items-center justify-center border border-[#C2A264]/30 shadow-inner shrink-0">
+                            🕋
+                        </div>
+                        <div class="min-w-0">
+                            <span class="text-[10px] uppercase font-bold tracking-widest text-[#E5C88F] block">
+                                Alhamdulillah &bull; Perjalanan Tuntas
+                            </span>
+                            <h2 class="text-base sm:text-lg font-bold text-white tracking-tight leading-snug mt-0.5">
+                                Terima kasih telah menyelesaikan ibadah Umrah bersama PT Zein Internasional 🕋
+                            </h2>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-emerald-100/80 leading-relaxed">
+                        Semoga seluruh rangkaian ibadah Bapak/Ibu <span class="font-bold text-white">{{ explode(' ', $user->name)[0] }}</span> diterima oleh Allah SWT, menjadi ibadah yang mabrur dan penuh keberkahan.
+                    </p>
+
+                    {{-- Ringkasan Perjalanan Terakhir --}}
+                    @if($latestCompleted)
+                        <div class="bg-white/[0.07] rounded-2xl p-3.5 border border-white/10 backdrop-blur-xs space-y-2.5">
+                            <div class="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/20 text-purple-200 border border-purple-400/40">
+                                        Selesai
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#C2A264]/20 text-[#E5C88F] border border-[#C2A264]/40">
+                                        Perjalanan Tuntas &bull; 100%
+                                    </span>
+                                </div>
+                                <span class="text-[9px] font-mono text-zinc-300">{{ $latestCompleted->registration_number }}</span>
+                            </div>
+
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="min-w-0">
+                                    <div class="text-xs font-bold text-white truncate">
+                                        {{ $latestCompleted->package->name ?? 'Paket Ibadah' }}
+                                    </div>
+                                    <div class="text-[11px] text-zinc-300 mt-0.5">
+                                        {{ $latestCompleted->packageVariant?->name ? 'Varian ' . $latestCompleted->packageVariant->name . ' • ' : '' }}
+                                        Kamar {{ ucfirst($latestCompleted->room_type ?? 'Quad') }} &bull; {{ $latestCompleted->members->count() }} Jamaah
+                                    </div>
+                                    <div class="text-[10px] text-emerald-300 font-bold mt-1">
+                                        Tahap 9 dari 9 &bull; LUNAS ✓
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <span class="text-[10px] text-zinc-300 block">Berangkat</span>
+                                    <span class="text-xs font-bold text-white block">
+                                        {{ $latestCompleted->package?->departure_date ? \Carbon\Carbon::parse($latestCompleted->package->departure_date)->translatedFormat('d M Y') : 'Selesai' }}
+                                    </span>
+                                    <a href="{{ route('jamaah.my-registration', ['id' => $latestCompleted->id]) }}" 
+                                       class="inline-block mt-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[10px] font-semibold border border-white/20 transition-all">
+                                        Detail Pendaftaran
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- CTA Section --}}
+                    <div class="pt-1 flex flex-col gap-2">
+                        {{-- CTA Utama --}}
+                        <a href="{{ route('paket') }}" 
+                           class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#C2A264] to-[#E5C88F] hover:brightness-110 active:scale-[0.98] text-[#12271E] font-extrabold text-xs text-center shadow-md shadow-[#C2A264]/30 transition-all flex items-center justify-center gap-2">
+                            <span>Pilih Paket Umrah/Haji Berikutnya</span>
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                        </a>
+
+                        {{-- CTA Sekunder --}}
+                        <a href="{{ route('jamaah.history') }}" 
+                           class="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[0.98] text-white font-semibold text-xs text-center border border-white/20 transition-all flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4 text-[#E5C88F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Lihat Riwayat Perjalanan Saya</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        {{-- ═══════════════════════════════════════════════════════════════
+             KONDISI C (MOBILE): BELUM PERNAH BOOKING SAMA SEKALI (AKUN BARU)
+             ═══════════════════════════════════════════════════════════════ --}}
         @else
-            {{-- Mobile Card: Belum Ada Pendaftaran --}}
-            <div class="bg-gradient-to-br from-[#1B3B2B] via-[#173527] to-[#10241A] text-white rounded-3xl p-5 shadow-lg border border-white/10 relative overflow-hidden space-y-3.5 text-center">
-                <div class="w-12 h-12 mx-auto rounded-2xl bg-white/10 text-emerald-300 flex items-center justify-center border border-white/15 shadow-xs">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+            <div class="bg-gradient-to-br from-[#1B3B2B] via-[#173527] to-[#10241A] text-white rounded-3xl p-5 sm:p-6 shadow-lg border border-white/10 relative overflow-hidden space-y-3.5 text-center">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-white/10 text-[#E5C88F] flex items-center justify-center border border-white/15 shadow-xs">
+                    <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+                    </svg>
                 </div>
                 <div class="space-y-1">
-                    <span class="text-[10px] uppercase font-bold tracking-widest text-[#C2A264] block">Langkah Awal</span>
-                    <h2 class="text-base font-bold text-white tracking-tight">Siap Menuju Baitullah?</h2>
+                    <span class="text-[10px] uppercase font-bold tracking-widest text-[#C2A264] block">Langkah Awal Ibadah</span>
+                    <h2 class="text-base sm:text-lg font-bold text-white tracking-tight">Wujudkan Niat Suci Menuju Baitullah</h2>
                     <p class="text-xs text-zinc-300 leading-relaxed max-w-xs mx-auto">
                         Pilih paket ibadah Umrah & Haji Khusus terbaik dengan fasilitas nyaman dan bimbingan resmi sesuai Sunnah.
                     </p>
                 </div>
                 <div class="pt-1 flex flex-col gap-2">
-                    <a href="{{ route('paket') }}" class="w-full py-2.5 px-4 rounded-xl bg-[#C2A264] hover:bg-[#b09153] text-[#12271E] font-bold text-xs shadow-md transition-all">
-                        Lihat Pilihan Paket &rarr;
+                    <a href="{{ route('paket') }}" 
+                       class="w-full py-3 px-4 rounded-xl bg-[#C2A264] hover:bg-[#b09153] text-[#12271E] font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2">
+                        <span>Pilih Paket Umrah/Haji Pertama Anda</span>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                     </a>
-                    <a href="{{ route('jamaah.registration.create') }}" class="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 transition-all">
+                    <a href="{{ route('jamaah.registration.create') }}" 
+                       class="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 transition-all">
                         Daftar Paket Sekarang
                     </a>
                 </div>
@@ -378,8 +701,28 @@
             </div>
         @endif
 
-        {{-- 2. Status Pendaftaran Aktif / Tampilan Belum Ada Data --}}
-        @if($registration)
+        {{-- ═══════════════════════════════════════════════════════════════
+             KONDISI A (DESKTOP): ADA BOOKING AKTIF (STATUS BUKAN 'SELESAI')
+             ═══════════════════════════════════════════════════════════════ --}}
+        @if(($dashboardState ?? 'A') === 'A' && count($activeRegistrations ?? ($registration ? [$registration] : [])) > 0)
+            @php $desktopRegsToRender = $activeRegistrations ?? ($registration ? collect([$registration]) : collect()); @endphp
+            @if($desktopRegsToRender->count() > 1)
+                <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-sm text-amber-900 font-semibold flex items-center justify-between shadow-2xs">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span>Anda memiliki {{ $desktopRegsToRender->count() }} Pendaftaran Aktif</span>
+                    </div>
+                    <span class="text-xs text-amber-700 font-normal">Diurutkan berdasarkan yang memerlukan perhatian terlebih dahulu</span>
+                </div>
+            @endif
+
+            @foreach($desktopRegsToRender as $desktopRegIndex => $registration)
+            @php
+                $step = $registration->step_number;
+                $totalSteps = \App\Models\Registration::TOTAL_STEPS;
+                $progress = $registration->progress_percentage;
+                $isCancelled = $registration->status === 'dibatalkan';
+            @endphp
             {{-- Kartu Pendaftaran Aktif --}}
             <div class="bg-white rounded-3xl border border-[#E0E7DC] shadow-xs overflow-hidden">
                 
@@ -389,9 +732,12 @@
                         
                         {{-- Detail Paket --}}
                         <div class="min-w-0 space-y-2">
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-[#4D5E54] block">
-                                Informasi Paket
-                            </span>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-[#C2A264]"></span>
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-[#4D5E54]">
+                                    Informasi Paket Pilihan
+                                </span>
+                            </div>
 
                             {{-- Nama Paket --}}
                             <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-[#12271E] tracking-tight leading-tight">
@@ -436,10 +782,17 @@
                             </div>
                         </div>
 
-                        {{-- Status Badge --}}
-                        <div class="shrink-0 self-start lg:self-start">
-                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold bg-[#EFF3EB] text-[#1B3B2B] border border-[#CCD8C7] shadow-2xs">
-                                <span class="w-2.5 h-2.5 rounded-full bg-[#1B3B2B] animate-pulse shrink-0"></span>
+                        {{-- Status Badge & Reference Number Chip --}}
+                        <div class="shrink-0 flex flex-col items-end gap-2.5 self-start">
+                            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#EFF3EB] text-[#1B3B2B] border border-[#CCD8C7] shadow-2xs font-mono text-xs font-bold">
+                                <svg class="w-3.5 h-3.5 text-[#C2A264]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+                                </svg>
+                                <span>{{ $registration->registration_number }}</span>
+                            </div>
+                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold {{ $statusMeta['badge_bg_desktop'] }} border shadow-2xs">
+                                <span class="w-2.5 h-2.5 rounded-full {{ $statusMeta['dot_color'] }} {{ $statusMeta['pulse'] ? 'animate-pulse' : '' }} shrink-0"></span>
+                                @include('jamaah.partials.status-icon', ['icon' => $statusMeta['icon']])
                                 <span>{{ $registration->status_label }}</span>
                             </span>
                         </div>
@@ -451,18 +804,37 @@
                 <div class="p-6 sm:p-8 space-y-6 sm:space-y-7">
                     
                     {{-- Progres Tahapan --}}
-                    @php
-                        $step = $registration->step_number;
-                        $isCancelled = $registration->status === 'dibatalkan';
-                    @endphp
                     @if(!$isCancelled)
-                        <div class="space-y-2.5">
+                        <div class="space-y-3 bg-[#EFF3EB]/50 p-5 rounded-2xl border border-[#CCD8C7]">
                             <div class="flex items-center justify-between text-xs sm:text-sm font-bold text-[#12271E]">
-                                <span>Tahap Persiapan Ibadah</span>
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#1B3B2B]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+                                    </svg>
+                                    <span>Tahap Persiapan Ibadah</span>
+                                </span>
                                 <span class="text-[#1B3B2B] font-semibold">Tahap {{ $step }} dari {{ \App\Models\Registration::TOTAL_STEPS }} ({{ $registration->progress_percentage }}%)</span>
                             </div>
-                            <div class="w-full bg-[#EFF3EB] rounded-full h-3 overflow-hidden border border-[#CCD8C7]">
-                                <div class="bg-[#1B3B2B] h-full rounded-full transition-all duration-500" style="width: {{ $registration->progress_percentage }}%"></div>
+
+                            {{-- Desktop 9-Segment Milestone Stepper --}}
+                            <div class="grid grid-cols-9 gap-1.5 py-1">
+                                @for($i = 1; $i <= $totalSteps; $i++)
+                                    @php
+                                        $isPassed = $i < $step;
+                                        $isCurrent = $i === $step;
+                                    @endphp
+                                    <div class="group relative flex flex-col items-center">
+                                        <div class="w-full h-2.5 rounded-full transition-all duration-300 {{ 
+                                            $isCurrent 
+                                                ? 'bg-gradient-to-r from-[#C2A264] to-emerald-600 shadow-sm ring-2 ring-[#C2A264]/40 animate-pulse' 
+                                                : ($isPassed ? 'bg-emerald-600' : 'bg-[#CCD8C7]/60') 
+                                        }}"></div>
+                                    </div>
+                                @endfor
+                            </div>
+
+                            <div class="w-full bg-white rounded-full h-2 overflow-hidden border border-[#CCD8C7]">
+                                <div class="bg-gradient-to-r from-[#C2A264] to-[#1B3B2B] h-full rounded-full transition-all duration-500" style="width: {{ $registration->progress_percentage }}%"></div>
                             </div>
                         </div>
                     @else
@@ -477,29 +849,45 @@
 
                     {{-- Ringkasan Biaya (3 Kolom Proporsional) --}}
                     @if($registration->invoice)
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[#EFF3EB]/50 p-5 sm:p-6 rounded-2xl border border-[#CCD8C7]">
-                            <div class="min-w-0">
-                                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#4D5E54] block mb-1">
-                                    Total Biaya
-                                </span>
-                                <span class="text-base sm:text-lg font-bold text-[#12271E] block truncate">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="min-w-0 bg-[#EFF3EB]/60 p-5 rounded-2xl border border-[#CCD8C7] flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#4D5E54]">
+                                        Total Biaya
+                                    </span>
+                                    <svg class="w-4 h-4 text-[#4D5E54]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                                <span class="text-lg sm:text-xl font-extrabold text-[#12271E] block truncate">
                                     Rp {{ number_format($registration->invoice->total_price, 0, ',', '.') }}
                                 </span>
+                                <span class="text-[10px] text-[#526057] block mt-1">Estimasi seluruh jamaah</span>
                             </div>
-                            <div class="min-w-0">
-                                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-800 block mb-1">
-                                    Sudah Dibayar
-                                </span>
-                                <span class="text-base sm:text-lg font-bold text-emerald-700 block truncate">
+
+                            <div class="min-w-0 bg-emerald-50/70 p-5 rounded-2xl border border-emerald-200 flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+                                        Sudah Dibayar
+                                    </span>
+                                    <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                                <span class="text-lg sm:text-xl font-extrabold text-emerald-700 block truncate">
                                     Rp {{ number_format($registration->invoice->total_paid, 0, ',', '.') }}
                                 </span>
+                                <span class="text-[10px] text-emerald-700/80 block mt-1">Telah diverifikasi keuangan</span>
                             </div>
-                            <div class="min-w-0">
-                                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#4D5E54] block mb-1">
-                                    Sisa Pembayaran
-                                </span>
-                                <span class="text-base sm:text-lg font-bold {{ $registration->invoice->remaining_balance > 0 ? 'text-[#1B3B2B]' : 'text-emerald-700' }} block truncate">
+
+                            <div class="min-w-0 bg-[#EFF3EB]/60 p-5 rounded-2xl border border-[#CCD8C7] flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#4D5E54]">
+                                        Sisa Pembayaran
+                                    </span>
+                                    <svg class="w-4 h-4 text-[#C2A264]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6H2.25m0 0v8.25m0 0a60.07 60.07 0 0015.797 2.101c.727.198 1.453-.342 1.453-1.096V6a.75.75 0 00-.75-.75h-.75m-15.75 0H21"/></svg>
+                                </div>
+                                <span class="text-lg sm:text-xl font-extrabold {{ $registration->invoice->remaining_balance > 0 ? 'text-[#1B3B2B]' : 'text-emerald-700' }} block truncate">
                                     {{ $registration->invoice->remaining_balance > 0 ? 'Rp ' . number_format($registration->invoice->remaining_balance, 0, ',', '.') : 'Lunas ✓' }}
+                                </span>
+                                <span class="text-[10px] text-[#526057] block mt-1">
+                                    {{ $registration->invoice->remaining_balance > 0 ? 'Sesuai termin pelunasan' : 'Biaya tuntas seluruhnya' }}
                                 </span>
                             </div>
                         </div>
@@ -515,18 +903,18 @@
 
                         @if($registration->status === 'menunggu_pembayaran_dp' || $registration->status === 'dokumen_disetujui')
                             <a href="{{ route('jamaah.payment.dp') }}" 
-                                class="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 transition-colors border border-amber-300">
+                                class="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-xs sm:text-sm font-bold text-[#12271E] bg-gradient-to-r from-[#C2A264] to-[#B09153] hover:brightness-105 transition-all shadow-sm">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6H2.25m0 0v8.25m0 0a60.07 60.07 0 0015.797 2.101c.727.198 1.453-.342 1.453-1.096V6a.75.75 0 00-.75-.75h-.75m-15.75 0H21"/></svg>
                                 <span>Bayar DP Sekarang</span>
                             </a>
                         @elseif($registration->status === 'menunggu_verifikasi_pembayaran_dp')
-                            <span class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200">
-                                <svg class="w-4 h-4 text-amber-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                            <span class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold text-sky-800 bg-sky-50 border border-sky-200">
+                                <svg class="w-4 h-4 text-sky-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
                                 <span>Verifikasi Pembayaran DP</span>
                             </span>
                         @elseif(in_array($registration->status, ['jamaah', 'cicilan_pelunasan']))
                             <a href="{{ route('jamaah.payment.pelunasan') }}" 
-                                class="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-xs sm:text-sm font-bold text-emerald-900 bg-emerald-100 hover:bg-emerald-200 transition-colors border border-emerald-300">
+                                class="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 <span>Setor Pelunasan</span>
                             </a>
@@ -536,12 +924,116 @@
                 </div>
 
             </div>
+            @endforeach
+
+        {{-- ═══════════════════════════════════════════════════════════════
+             KONDISI B (DESKTOP): SEMUA BOOKING SUDAH 'SELESAI' (PUNYA RIWAYAT)
+             ═══════════════════════════════════════════════════════════════ --}}
+        @elseif(($dashboardState ?? '') === 'B')
+            <div class="bg-gradient-to-br from-[#122B1F] via-[#1B3B2B] to-[#0D1E16] text-white rounded-3xl p-8 sm:p-10 shadow-xl border border-[#C2A264]/40 relative overflow-hidden space-y-6">
+                {{-- Background decorative elements --}}
+                <div class="absolute -right-12 -top-12 w-64 h-64 bg-[#C2A264]/15 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-12 -bottom-12 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 space-y-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/10">
+                        <div class="flex items-center gap-5">
+                            <div class="w-16 h-16 rounded-2xl bg-white/10 text-3xl flex items-center justify-center border border-[#C2A264]/40 shadow-inner shrink-0">
+                                🕋
+                            </div>
+                            <div>
+                                <span class="text-xs uppercase font-bold tracking-widest text-[#E5C88F] block mb-1">
+                                    Alhamdulillah &bull; Perjalanan Ibadah Tuntas
+                                </span>
+                                <h2 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
+                                    Terima kasih telah menyelesaikan ibadah Umrah bersama PT Zein Internasional 🕋
+                                </h2>
+                                <p class="text-xs sm:text-sm text-emerald-100/80 mt-1.5 leading-relaxed max-w-2xl">
+                                    Semoga seluruh amal ibadah Bapak/Ibu <span class="font-bold text-white">{{ $user->name }}</span> menjadi haji/umrah yang mabrur, senantiasa dilimpahi keberkahan dan keridhaan Allah SWT.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="shrink-0 flex items-center gap-3">
+                            <a href="{{ route('paket') }}" 
+                               class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold text-[#12271E] bg-gradient-to-r from-[#C2A264] to-[#E5C88F] hover:brightness-110 active:scale-[0.98] transition-all shadow-md shadow-[#C2A264]/30">
+                                <span>Pilih Paket Umrah/Haji Berikutnya</span>
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                            </a>
+                            <a href="{{ route('jamaah.history') }}" 
+                               class="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-white/10 hover:bg-white/20 active:scale-[0.98] transition-all border border-white/20">
+                                <svg class="w-4 h-4 text-[#E5C88F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Lihat Riwayat Perjalanan Saya</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    {{-- Ringkasan Perjalanan Terakhir --}}
+                    @if($latestCompleted)
+                        <div class="bg-white/[0.07] rounded-2xl p-6 border border-white/10 backdrop-blur-xs space-y-4">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs uppercase font-bold tracking-wider text-emerald-300">Ringkasan Perjalanan Terakhir</span>
+                                    <span class="font-mono text-xs font-bold text-white bg-black/40 px-2.5 py-0.5 rounded-lg border border-[#C2A264]/30">
+                                        {{ $latestCompleted->registration_number }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-200 border border-purple-400/40">
+                                        Selesai
+                                    </span>
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-[#C2A264]/20 text-[#E5C88F] border border-[#C2A264]/40">
+                                        Perjalanan Tuntas &bull; 100%
+                                    </span>
+                                    <a href="{{ route('jamaah.my-registration', ['id' => $latestCompleted->id]) }}" 
+                                       class="px-3 py-1 rounded-xl text-xs font-bold text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all">
+                                        Detail Pendaftaran
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-1">
+                                <div class="bg-white/5 rounded-xl p-3.5 border border-white/10">
+                                    <span class="text-[11px] text-zinc-300 uppercase font-semibold block">Paket Ibadah</span>
+                                    <span class="font-bold text-sm text-white block mt-1 truncate">{{ $latestCompleted->package->name ?? 'Paket Ibadah' }}</span>
+                                    <span class="text-[11px] text-[#E5C88F] block mt-0.5">{{ $latestCompleted->packageVariant?->name ?? 'Varian Standar' }}</span>
+                                </div>
+
+                                <div class="bg-white/5 rounded-xl p-3.5 border border-white/10">
+                                    <span class="text-[11px] text-zinc-300 uppercase font-semibold block">Keberangkatan</span>
+                                    <span class="font-bold text-sm text-white block mt-1">
+                                        {{ $latestCompleted->package?->departure_date ? \Carbon\Carbon::parse($latestCompleted->package->departure_date)->translatedFormat('d M Y') : 'Tuntas' }}
+                                    </span>
+                                    <span class="text-[11px] text-zinc-300 block mt-0.5">{{ $latestCompleted->package?->duration ?? 9 }} Hari Perjalanan</span>
+                                </div>
+
+                                <div class="bg-white/5 rounded-xl p-3.5 border border-white/10">
+                                    <span class="text-[11px] text-zinc-300 uppercase font-semibold block">Jumlah Jamaah</span>
+                                    <span class="font-bold text-sm text-white block mt-1">{{ $latestCompleted->members->count() }} Orang</span>
+                                    <span class="text-[11px] text-zinc-300 block mt-0.5">Kamar {{ ucfirst($latestCompleted->room_type ?? 'Quad') }}</span>
+                                </div>
+
+                                <div class="bg-white/5 rounded-xl p-3.5 border border-white/10">
+                                    <span class="text-[11px] text-zinc-300 uppercase font-semibold block">Status & Pelunasan</span>
+                                    <span class="font-bold text-sm text-emerald-300 block mt-1">
+                                        LUNAS ✓
+                                    </span>
+                                    <span class="text-[11px] text-[#E5C88F] font-medium block mt-0.5">Tahap 9 dari 9 &bull; 100%</span>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+        {{-- ═══════════════════════════════════════════════════════════════
+             KONDISI C (DESKTOP): BELUM PERNAH BOOKING SAMA SEKALI (AKUN BARU)
+             ═══════════════════════════════════════════════════════════════ --}}
         @else
-            {{-- Tampilan Belum Ada Pendaftaran --}}
             <div class="bg-white rounded-3xl border border-[#E0E7DC] p-8 sm:p-12 text-center shadow-xs">
                 <div class="w-20 h-20 rounded-3xl bg-[#EFF3EB] text-[#1B3B2B] flex items-center justify-center mx-auto mb-5 shadow-xs border border-[#CCD8C7]">
                     <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                     </svg>
                 </div>
                 <h2 class="text-xl sm:text-2xl font-bold text-[#12271E] mb-2">
@@ -554,7 +1046,7 @@
                     <a href="{{ route('paket') }}" 
                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-xs font-bold text-white bg-[#1B3B2B] hover:bg-[#132E22] active:scale-[0.98] transition-all shadow-md shadow-[#1B3B2B]/15">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
-                        <span>Lihat Paket Umrah</span>
+                        <span>Pilih Paket Umrah/Haji Pertama Anda</span>
                     </a>
                     <a href="{{ route('jamaah.registration.create') }}" 
                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-xs font-bold text-[#12271E] bg-[#EFF3EB] hover:bg-[#E0E7DC] transition-colors border border-[#CCD8C7]">

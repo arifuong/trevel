@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{{ $title }}</title>
     <meta name="robots" content="noindex, nofollow">
-    <meta name="theme-color" content="#122B1F">
+    <meta name="theme-color" content="#12271E">
 
     @php
         $manifestPath = public_path('build/manifest.json');
@@ -50,7 +50,7 @@
     </style>
     @stack('styles')
 </head>
-<body class="font-sans antialiased bg-[#F8FAF7] text-[#526057] min-h-screen flex flex-col selection:bg-[#1B3B2B] selection:text-white">
+<body class="font-sans antialiased bg-[#F7F5F0] text-[#526057] min-h-screen flex flex-col selection:bg-[#1B3B2B] selection:text-white">
 
     @php
         $adminNavItems = [
@@ -128,6 +128,16 @@
                 'desc' => 'Kelola foto dokumentasi & video kegiatan jamaah',
                 'icon_svg' => 'M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z',
                 'is_bottom_tab' => false,
+                'section' => 'Menu Utama',
+            ],
+            [
+                'name' => 'Laporan',
+                'route' => 'admin.reports.index',
+                'pattern' => 'admin.reports.*',
+                'desc' => 'Rekapitulasi jamaah, pembayaran, piutang & keberangkatan',
+                'icon_svg' => 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z',
+                'is_bottom_tab' => false,
+                'section' => 'Laporan & Rekap',
             ],
         ];
     @endphp
@@ -135,7 +145,7 @@
     {{-- ═══════════════════════════════════════════════════════════════
          DESKTOP & TABLET SIDEBAR (NAVIGASI KIRI)
          ═══════════════════════════════════════════════════════════════ --}}
-    <aside class="hidden lg:flex flex-col w-64 fixed inset-y-0 left-0 bg-[#122B1F] text-white z-30 border-r border-white/10">
+    <aside class="hidden lg:flex flex-col w-64 fixed inset-y-0 left-0 bg-[#12271E] text-white z-30 border-r border-white/10">
         
         {{-- Logo & Brand --}}
         <div class="h-16 flex items-center px-6 border-b border-white/10">
@@ -145,7 +155,7 @@
                      class="h-8 w-auto brightness-0 invert object-contain" 
                      width="110" 
                      height="32">
-                <span class="text-[10px] uppercase font-bold tracking-widest text-emerald-400 bg-white/10 px-2 py-0.5 rounded border border-white/10">
+                <span class="text-[10px] uppercase font-bold tracking-widest text-[#E5C88F] bg-[#1B3B2B] px-2 py-0.5 rounded border border-[#C2A264]/30">
                     Admin
                 </span>
             </a>
@@ -157,13 +167,23 @@
                 Menu Utama
             </div>
 
+            @php $currentSection = 'Menu Utama'; @endphp
             @foreach($adminNavItems as $nav)
                 @php
+                    $itemSection = $nav['section'] ?? 'Menu Utama';
                     $isActive = request()->routeIs($nav['pattern']);
                 @endphp
+
+                @if($itemSection !== $currentSection)
+                    @php $currentSection = $itemSection; @endphp
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-white/40 px-3 pt-4 pb-1 mb-1 border-t border-white/10">
+                        {{ $currentSection }}
+                    </div>
+                @endif
+
                 <a href="{{ route($nav['route']) }}" 
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all {{ $isActive ? 'bg-[#1B3B2B] text-white shadow-xs border border-emerald-500/30' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
-                    <svg class="w-4 h-4 text-emerald-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all {{ $isActive ? 'bg-[#1B3B2B] text-white shadow-xs border border-[#C2A264]/40' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
+                    <svg class="w-4 h-4 {{ $isActive ? 'text-[#E5C88F]' : 'text-emerald-300/80' }} shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="{{ $nav['icon_svg'] }}"/>
                     </svg>
                     <span class="truncate">{{ $nav['name'] }}</span>
@@ -184,12 +204,12 @@
 
             <div class="flex items-center justify-between pt-2 border-t border-white/10">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold text-xs border border-emerald-400/30">
+                    <div class="w-8 h-8 rounded-full bg-[#1B3B2B] text-[#E5C88F] flex items-center justify-center font-bold text-xs border border-[#C2A264]/40">
                         {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
                     </div>
                     <div class="truncate max-w-[100px]">
                         <span class="text-xs font-semibold text-white block leading-tight truncate">{{ auth()->user()->name ?? 'Admin' }}</span>
-                        <span class="text-[9px] text-emerald-300 block leading-tight">Pengelola</span>
+                        <span class="text-[9px] text-[#E5C88F] block leading-tight font-medium">Pengelola</span>
                     </div>
                 </div>
                 <form method="POST" action="{{ route('admin.logout') }}">
@@ -211,14 +231,14 @@
     <div class="lg:pl-64 flex flex-col flex-grow min-h-screen">
 
         {{-- Header Atas Layar Mobile --}}
-        <header class="lg:hidden bg-[#122B1F] text-white sticky top-0 z-30 px-3.5 sm:px-4 h-14 flex items-center justify-between shadow-sm border-b border-white/10">
+        <header class="lg:hidden bg-[#12271E] text-white sticky top-0 z-30 px-3.5 sm:px-4 h-14 flex items-center justify-between shadow-xs border-b border-white/10">
             <div class="flex items-center gap-2 min-w-0">
                 <img src="{{ asset('images/logo-zein.webp') }}" 
                      alt="Logo Zein Tour" 
                      class="h-7 w-auto brightness-0 invert object-contain shrink-0" 
                      width="90" 
                      height="28">
-                <span class="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-emerald-400 bg-white/10 px-1.5 py-0.5 rounded border border-white/10 shrink-0">
+                <span class="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-[#E5C88F] bg-[#1B3B2B] px-1.5 py-0.5 rounded border border-[#C2A264]/30 shrink-0">
                     Admin
                 </span>
             </div>
@@ -226,7 +246,7 @@
             <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {{-- Info User Mobile --}}
                 <div class="flex items-center gap-1.5 bg-white/10 rounded-full py-1 pl-1.5 pr-2.5 border border-white/10">
-                    <div class="w-5 h-5 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px] font-bold flex items-center justify-center shrink-0">
+                    <div class="w-5 h-5 rounded-full bg-[#1B3B2B] text-[#E5C88F] text-[10px] font-bold flex items-center justify-center shrink-0 border border-[#C2A264]/30">
                         {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
                     </div>
                     <span class="text-[11px] font-semibold text-white max-w-[65px] sm:max-w-[100px] truncate">
@@ -256,7 +276,7 @@
                 <span>Pusat Kendali Pengelolaan Umrah & Haji</span>
             </div>
             <div class="flex items-center gap-3">
-                <span class="text-xs text-[#526057] bg-[#EFF3EB] px-3 py-1 rounded-full font-medium border border-[#E0E7DC]">
+                <span class="text-xs text-[#1B3B2B] bg-[#F7F5F0] px-3 py-1 rounded-full font-semibold border border-[#E0E7DC]">
                     {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
                 </span>
             </div>
@@ -331,7 +351,7 @@
             
             {{-- Handle Bar Drawer --}}
             <div class="pt-3 pb-2 flex justify-center cursor-pointer" @click="showMoreMenu = false">
-                <div class="w-12 h-1.5 rounded-full bg-[#CCD8C7]"></div>
+                <div class="w-12 h-1.5 rounded-full bg-[#DCD5C5]"></div>
             </div>
 
             {{-- Header Drawer --}}
@@ -352,14 +372,22 @@
 
             {{-- List Menu Fitur Lainnya (Single Source of Truth) --}}
             <div id="admin-mobile-drawer-menu" class="p-4 space-y-2 overflow-y-auto max-h-[60vh]">
+                @php $currentDrawerSection = 'Menu Utama'; @endphp
                 @foreach($adminNavItems as $nav)
                     @if(empty($nav['is_bottom_tab']))
                         @php
+                            $itemSection = $nav['section'] ?? 'Menu Utama';
                             $isItemActive = request()->routeIs($nav['pattern']);
                         @endphp
+                        @if($itemSection !== $currentDrawerSection)
+                            @php $currentDrawerSection = $itemSection; @endphp
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-[#526057] px-3 pt-3 pb-1 border-t border-[#E0E7DC] mt-2">
+                                {{ $currentDrawerSection }}
+                            </div>
+                        @endif
                         <a href="{{ route($nav['route']) }}" 
-                           @click="showMoreMenu = false"
-                           class="flex items-center gap-3.5 p-3 rounded-2xl transition-all {{ $isItemActive ? 'bg-[#EFF3EB] text-[#1B3B2B] font-bold border border-[#CCD8C7]' : 'text-[#12271E] hover:bg-[#F8FAF7]' }}">
+                           @click="showMoreMenu = false" 
+                           class="flex items-center gap-3.5 p-3 rounded-2xl transition-all {{ $isItemActive ? 'bg-[#EFF3EB] text-[#1B3B2B] font-bold border border-[#CCD8C7]' : 'text-[#12271E] hover:bg-[#F7F5F0]' }}">
                             <div class="w-10 h-10 rounded-xl {{ $isItemActive ? 'bg-[#1B3B2B] text-white' : 'bg-[#EFF3EB] text-[#1B3B2B]' }} flex items-center justify-center shrink-0 shadow-2xs">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="{{ $nav['icon_svg'] }}"/>

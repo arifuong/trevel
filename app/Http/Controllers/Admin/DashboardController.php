@@ -10,15 +10,17 @@ use App\Models\Registration;
 use App\Models\RegistrationCancellation;
 use App\Models\RegistrationMember;
 use App\Models\User;
+use App\Services\PeriodFilterService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     /**
-     * Dashboard admin - PRD Section 6.11 (Operasional Dasar: angka & tabel ringkasan).
+     * Dashboard admin - PRD Section 6.11 (Operasional Dasar: angka & tabel ringkasan)
+     * & Section 14-15 (Grafik Tren Pendaftaran & Pembayaran Dinamis Berdasarkan Periode).
      */
-    public function index()
+    public function index(Request $request, PeriodFilterService $periodFilterService)
     {
         // 1. Metrik Utama
         $totalJamaah = User::where('role', 'jamaah')->count();
@@ -128,6 +130,53 @@ class DashboardController extends Controller
             ->take(6)
             ->get();
 
+        // 5. Filter Periode & Dataset Grafik Analitik (PRD Bagian 15)
+        $periodData = $periodFilterService->parseRequest($request);
+        $startDate = $periodData['start_date'];
+        $endDate = $periodData['end_date'];
+        $period = $periodData['period'];
+        $buckets = $periodFilterService->getBuckets($startDate, $endDate, $period);
+
+        // Ambil pendaftaran dalam rentang periode aktif (berdasarkan tanggal daftar / created_at)
+        $registrationsInPeriod = Registration::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', '!=', Registration::STATUS_DIBATALKAN)
+            ->where(function ($cq) {
+                $cq->whereNull('cancellation_status')
+                   ->orWhere('cancellation_status', '!=', RegistrationCancellation::STATUS_APPROVED);
+            })
+            ->select('id', 'created_at')
+            ->get();
+
+        // Ambil pembayaran yang diverifikasi dalam rentang periode aktif (berdasarkan verified_at)
+        $paymentsInPeriod = Payment::where('status', Payment::STATUS_DISETUJUI)
+            ->whereBetween('verified_at', [$startDate, $endDate])
+            ->select('id', 'amount', 'verified_at')
+            ->get();
+
+        $chartLabels = [];
+        $registrationChartData = [];
+        $paymentChartData = [];
+
+        foreach ($buckets as $bucket) {
+            $chartLabels[] = $bucket['label'];
+            $bStart = $bucket['start'];
+            $bEnd = $bucket['end'];
+
+            $regCount = $registrationsInPeriod->filter(function ($reg) use ($bStart, $bEnd) {
+                return $reg->created_at >= $bStart && $reg->created_at <= $bEnd;
+            })->count();
+
+            $paySum = (float) $paymentsInPeriod->filter(function ($pay) use ($bStart, $bEnd) {
+                return $pay->verified_at >= $bStart && $pay->verified_at <= $bEnd;
+            })->sum('amount');
+
+            $registrationChartData[] = $regCount;
+            $paymentChartData[] = $paySum;
+        }
+
+        $totalPeriodRegistrations = array_sum($registrationChartData);
+        $totalPeriodIncome = array_sum($paymentChartData);
+
         return view('admin.dashboard', [
             'totalJamaah' => $totalJamaah,
             'totalPendaftaran' => $totalPendaftaran,
@@ -141,6 +190,13 @@ class DashboardController extends Controller
             'packagesSummary' => $packagesSummary,
             'upcomingDueInvoices' => $upcomingDueInvoices,
             'recentRegistrations' => $recentRegistrations,
+            // Period Filter & Chart Data
+            'periodData' => $periodData,
+            'chartLabels' => $chartLabels,
+            'registrationChartData' => $registrationChartData,
+            'paymentChartData' => $paymentChartData,
+            'totalPeriodRegistrations' => $totalPeriodRegistrations,
+            'totalPeriodIncome' => $totalPeriodIncome,
         ]);
     }
 }

@@ -234,7 +234,7 @@ class RegistrationController extends Controller
     {
         $user = $request->user();
         
-        $registration = $user->registrations()
+        $registrationQuery = $user->registrations()
             ->with([
                 'package',
                 'packageVariant',
@@ -242,9 +242,13 @@ class RegistrationController extends Controller
                 'invoice',
                 'payments',
                 'latestCancellation'
-            ])
-            ->latest()
-            ->first();
+            ]);
+
+        if ($reqId = $request->query('id')) {
+            $registration = $registrationQuery->where('id', $reqId)->first();
+        } else {
+            $registration = $registrationQuery->latest()->first();
+        }
 
         $departureSummary = null;
         if ($registration) {

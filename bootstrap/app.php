@@ -23,6 +23,40 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->report(function (\Throwable $e): void {
+            $sanitize = function (string $text): string {
+                $secrets = [
+                    getenv('APP_KEY') ?: null,
+                    getenv('DB_PASSWORD') ?: null,
+                    getenv('AWS_SECRET_ACCESS_KEY') ?: null,
+                    app()->bound('config') ? config('database.connections.mysql.password') : null,
+                ];
+                foreach (array_filter($secrets) as $secret) {
+                    if (is_string($secret) && strlen($secret) >= 4) {
+                        $text = str_replace($secret, '[REDACTED]', $text);
+                    }
+                }
+                $text = preg_replace('/(password\s*[:=]\s*)[^\s,;&]+/i', '$1[REDACTED]', $text);
+                return $text;
+            };
+
+            $diagnostic = sprintf(
+                "\n" . str_repeat('=', 70) . "\n" .
+                "[VERCEL DIAGNOSTIC ERROR] %s\n" .
+                "Message : %s\n" .
+                "Location: %s:%d\n" .
+                "Trace   :\n%s\n" .
+                str_repeat('=', 70) . "\n",
+                get_class($e),
+                $sanitize($e->getMessage()),
+                $e->getFile(),
+                $e->getLine(),
+                $sanitize($e->getTraceAsString())
+            );
+
+            file_put_contents('php://stderr', $diagnostic);
+        });
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

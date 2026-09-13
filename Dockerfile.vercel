@@ -87,7 +87,7 @@ RUN mkdir -p \
     /app/storage/logs \
     /app/bootstrap/cache \
     && chown -R www-data:www-data /app/storage /app/bootstrap/cache \
-    && chmod -R 775 /app/storage /app/bootstrap/cache
+    && chmod -R 777 /app/storage /app/bootstrap/cache
 
 # Run Laravel package discovery
 RUN php artisan package:discover --ansi

@@ -39,7 +39,7 @@ RUN composer install \
     --optimize-autoloader
 
 # ===============================================================
-# Stage 3: Final Production Runtime with FrankenPHP (PHP 8.3)
+# Stage 3: Final Production Runtime with FrankenPHP (PHP 8.4)
 # ===============================================================
 FROM dunglas/frankenphp:1-php8.4-bookworm AS runner
 
@@ -73,8 +73,8 @@ COPY . /app
 # Copy compiled vendor from composer-builder
 COPY --from=composer-builder /app/vendor /app/vendor
 
-# Copy compiled assets from frontend-builder
-COPY --from=frontend-builder /app/public/build /app/public/build
+# Copy compiled assets from frontend-builder (with trailing slashes for explicit directory copying)
+COPY --from=frontend-builder /app/public/build/ /app/public/build/
 
 # Copy production Caddyfile
 COPY Caddyfile /etc/caddy/Caddyfile
@@ -87,7 +87,8 @@ RUN mkdir -p \
     /app/storage/logs \
     /app/bootstrap/cache \
     && chown -R www-data:www-data /app/storage /app/bootstrap/cache \
-    && chmod -R 777 /app/storage /app/bootstrap/cache
+    && chmod -R 777 /app/storage /app/bootstrap/cache \
+    && chmod -R 755 /app/public
 
 # Run Laravel package discovery
 RUN php artisan package:discover --ansi

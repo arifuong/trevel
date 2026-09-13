@@ -10,16 +10,6 @@
 	root * /app/public
 	encode zstd gzip
 
-	# Execute PHP scripts via FrankenPHP
-	php_server
-
-	# Long-term caching for Vite and static assets
-	@static {
-		file
-		path *.ico *.css *.js *.gif *.webp *.avif *.jpg *.jpeg *.png *.svg *.woff *.woff2 *.ttf
-	}
-	header @static Cache-Control "public, max-age=31536000, immutable"
-
 	# Production Security Headers
 	header {
 		X-Content-Type-Options "nosniff"
@@ -28,9 +18,23 @@
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 	}
 
-	# Deny direct access to hidden files and sensitive dotfiles
-	@hidden {
-		path */.*
+	# Long-term caching for Vite hashed assets (CSS, JS, fonts, images)
+	@viteAssets path /build/assets/*
+	header @viteAssets Cache-Control "public, max-age=31536000, immutable"
+
+	# Cache control for general static assets
+	@static path /images/* /fonts/* /favicon.ico /robots.txt
+	header @static Cache-Control "public, max-age=86400, must-revalidate"
+
+	# Execute PHP scripts via FrankenPHP
+	php_server
+
+	# Serve static files (Vite build assets, images, fonts, etc.)
+	file_server {
+		hide .*
 	}
+
+	# Deny direct access to hidden dotfiles (.env, .git, etc.)
+	@hidden path */.*
 	respond @hidden 404
 }

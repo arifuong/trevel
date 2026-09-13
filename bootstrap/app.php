@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->append(\App\Http\Middleware\SecurityAndPerformanceHeaders::class);
         $middleware->redirectTo(
             guests: fn (Request $request) => $request->is('admin*') ? route('admin.login') : route('login'),

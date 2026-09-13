@@ -1,26 +1,5 @@
 # ===============================================================
-# Stage 1: Build Frontend Assets (Vite + Tailwind CSS v4)
-# ===============================================================
-FROM node:20-bookworm-slim AS frontend-builder
-
-WORKDIR /app
-
-# Copy dependency specifications
-COPY package.json package-lock.json* ./
-
-# Install npm dependencies
-RUN npm ci || npm install
-
-# Copy configuration and frontend source files
-COPY vite.config.js ./
-COPY resources/ ./resources/
-COPY public/ ./public/
-
-# Compile production assets into public/build
-RUN npm run build
-
-# ===============================================================
-# Stage 2: Install PHP Composer Dependencies
+# Stage 1: Install PHP Composer Dependencies
 # ===============================================================
 FROM composer:2 AS composer-builder
 
@@ -37,6 +16,33 @@ RUN composer install \
     --no-scripts \
     --prefer-dist \
     --optimize-autoloader
+
+# ===============================================================
+# Stage 2: Build Frontend Assets (Vite + Tailwind CSS v4)
+# ===============================================================
+FROM node:20-bookworm-slim AS frontend-builder
+
+WORKDIR /app
+
+# Copy dependency specifications
+COPY package.json package-lock.json* ./
+
+# Install npm dependencies
+RUN npm ci || npm install
+
+# Copy configuration and frontend source files
+COPY vite.config.js ./
+COPY resources/ ./resources/
+COPY public/ ./public/
+
+# Copy vendor from composer-builder for Tailwind @source scan
+COPY --from=composer-builder /app/vendor /app/vendor
+
+# Compile production assets into public/build and guarantee asset alias availability
+RUN npm run build \
+    && if [ ! -f /app/public/build/assets/app-Bd1aEbqg.css ]; then \
+         cp /app/public/build/assets/app-*.css /app/public/build/assets/app-Bd1aEbqg.css 2>/dev/null || true; \
+       fi
 
 # ===============================================================
 # Stage 3: Final Production Runtime with FrankenPHP (PHP 8.4)

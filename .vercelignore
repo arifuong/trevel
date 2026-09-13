@@ -5,10 +5,7 @@
 node_modules
 vendor
 tests
-docker
-Dockerfile*
 docker-compose*
-*.md
 .phpunit.cache
 .phpunit.result.cache
 storage/logs/*.log

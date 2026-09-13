@@ -47,20 +47,19 @@ FROM dunglas/frankenphp:1-php8.3-bookworm AS runner
 RUN install-php-extensions \
     pdo_mysql \
     gd \
+    mbstring \
+    exif \
+    intl \
     zip \
     bcmath \
-    intl \
     opcache \
-    pcntl \
-    mbstring \
-    exif
+    pcntl
 
 # Set production environment variables
 ENV APP_ENV=production \
     APP_DEBUG=false \
     LOG_CHANNEL=stderr \
-    SERVER_NAME=":80" \
-    CADDY_GLOBAL_OPTIONS="auto_https off"
+    PORT=80
 
 WORKDIR /app
 
@@ -89,12 +88,12 @@ RUN mkdir -p \
 # Run Laravel package discovery
 RUN php artisan package:discover --ansi
 
-# Expose HTTP port
+# Expose default HTTP port (overridden dynamically by $PORT at runtime)
 EXPOSE 80
 
 # Health check using Laravel built-in /up endpoint
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:80/up || exit 1
+    CMD curl -f http://localhost:${PORT:-80}/up || exit 1
 
-# Start FrankenPHP with Caddy
+# Start FrankenPHP with Caddy listening on $PORT
 CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]

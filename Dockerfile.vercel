@@ -59,7 +59,11 @@ RUN install-php-extensions \
 ENV APP_ENV=production \
     APP_DEBUG=false \
     LOG_CHANNEL=stderr \
-    PORT=80
+    PORT=80 \
+    CACHE_STORE=database \
+    SESSION_DRIVER=database \
+    QUEUE_CONNECTION=sync \
+    DB_CONNECTION=mysql
 
 WORKDIR /app
 

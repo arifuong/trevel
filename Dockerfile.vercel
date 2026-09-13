@@ -1,0 +1,100 @@
+# ===============================================================
+# Stage 1: Build Frontend Assets (Vite + Tailwind CSS v4)
+# ===============================================================
+FROM node:20-bookworm-slim AS frontend-builder
+
+WORKDIR /app
+
+# Copy dependency specifications
+COPY package.json package-lock.json* ./
+
+# Install npm dependencies
+RUN npm ci || npm install
+
+# Copy configuration and frontend source files
+COPY vite.config.js ./
+COPY resources/ ./resources/
+COPY public/ ./public/
+
+# Compile production assets into public/build
+RUN npm run build
+
+# ===============================================================
+# Stage 2: Install PHP Composer Dependencies
+# ===============================================================
+FROM composer:2 AS composer-builder
+
+WORKDIR /app
+
+# Copy composer specifications
+COPY composer.json composer.lock ./
+
+# Install production dependencies without dev packages or scripts
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-progress \
+    --no-scripts \
+    --prefer-dist \
+    --optimize-autoloader
+
+# ===============================================================
+# Stage 3: Final Production Runtime with FrankenPHP (PHP 8.3)
+# ===============================================================
+FROM dunglas/frankenphp:1-php8.3-bookworm AS runner
+
+# Install required PHP extensions for Laravel 13, DomPDF, and Intervention Image
+RUN install-php-extensions \
+    pdo_mysql \
+    gd \
+    zip \
+    bcmath \
+    intl \
+    opcache \
+    pcntl \
+    mbstring \
+    exif
+
+# Set production environment variables
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    LOG_CHANNEL=stderr \
+    SERVER_NAME=":80" \
+    CADDY_GLOBAL_OPTIONS="auto_https off"
+
+WORKDIR /app
+
+# Copy application source
+COPY . /app
+
+# Copy compiled vendor from composer-builder
+COPY --from=composer-builder /app/vendor /app/vendor
+
+# Copy compiled assets from frontend-builder
+COPY --from=frontend-builder /app/public/build /app/public/build
+
+# Copy production Caddyfile
+COPY Caddyfile /etc/caddy/Caddyfile
+
+# Create required directories and set proper permissions
+RUN mkdir -p \
+    /app/storage/framework/cache/data \
+    /app/storage/framework/sessions \
+    /app/storage/framework/views \
+    /app/storage/logs \
+    /app/bootstrap/cache \
+    && chown -R www-data:www-data /app/storage /app/bootstrap/cache \
+    && chmod -R 775 /app/storage /app/bootstrap/cache
+
+# Run Laravel package discovery
+RUN php artisan package:discover --ansi
+
+# Expose HTTP port
+EXPOSE 80
+
+# Health check using Laravel built-in /up endpoint
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:80/up || exit 1
+
+# Start FrankenPHP with Caddy
+CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]

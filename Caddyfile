@@ -1,0 +1,35 @@
+{
+	# Global FrankenPHP configuration
+	frankenphp
+	order php_server before file_server
+}
+
+:80 {
+	# Application document root
+	root * /app/public
+	encode zstd gzip
+
+	# Execute PHP scripts via FrankenPHP
+	php_server
+
+	# Long-term caching for Vite and static assets
+	@static {
+		file
+		path *.ico *.css *.js *.gif *.webp *.avif *.jpg *.jpeg *.png *.svg *.woff *.woff2 *.ttf
+	}
+	header @static Cache-Control "public, max-age=31536000, immutable"
+
+	# Production Security Headers
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
+
+	# Deny direct access to hidden files and sensitive dotfiles
+	@hidden {
+		path */.*
+	}
+	respond @hidden 404
+}
